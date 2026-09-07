@@ -1,0 +1,36 @@
+[
+  {
+    "rows": 1500,
+    "seed": 7,
+    "dirty_idx": 3,
+    "build_clean": 0.017325623997749062,
+    "clean_rows": 1500,
+    "build_trap": 0.016786088999651838,
+    "trap_rows": 1501,
+    "hypA": 0.00014824200115981512,
+    "hypA_ok": {
+      "valid": true,
+      "caught": false,
+      "false_positive": false,
+      "trap_rows": 0,
+      "clean_rows": 0,
+      "error": ""
+    },
+    "hypB": 0.0016114669997477904,
+    "hypB_ok": {
+      "valid": true,
+      "caught": true,
+      "false_positive": false,
+      "trap_rows": 1,
+      "clean_rows": 0,
+      "error": ""
+    },
+    "hypB_true": {
+      "valid": true,
+      "caught": true,
+      "false_positive": false
+    },
+    "select_trap_via_B": 0.0007790720010234509,
+    "total": 0.03572317999714869
+  }
+]

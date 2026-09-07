@@ -3,86 +3,209 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SAS Reconcile SLM — live debug demo</title>
+<title>SAS Reconcile — sas-debugger · live debug</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0f1419; --panel:#161d26; --fg:#e6edf3; --muted:#8b98a5;
-          --line:#26303b; --accent:#4ea1ff; --ok:#3fb950; --warn:#d29922;
-          --err:#f85149; --mono:'JetBrains Mono',ui-monospace,monospace; }
+  :root {
+    --paper:#F4F3F0; --ink:#16212C; --muted:#5E6B77; --soft:#66727D;
+    --accent:#0069B4; --navy:#002E5F; --cyan:#00A3E0;
+    --card:#FFFFFF; --rule:#D9D6CF; --rowrule:#E7E4DE; --hover:#E8F1F8; --sel:#DCE6EF;
+    --ok:#12705A; --okbg:#E2EFEA; --bad:#A62A22; --badbg:#F6E9E7;
+    --warn:#9A6B12; --warnbg:#F5EEE0; --flat:#5E6B77; --flatbg:#ECEAE5;
+    --serif:'Source Serif 4',Georgia,serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,sans-serif; }
-  header { padding:18px 24px; border-bottom:1px solid var(--line); background:var(--panel); }
-  header h1 { margin:0; font-size:20px; }
-  header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
-  main { max-width:1180px; margin:0 auto; padding:20px 24px; display:grid;
-         grid-template-columns:360px 1fr; gap:20px; }
-  @media (max-width:900px){ main{ grid-template-columns:1fr; } }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
-  .card h2 { margin:0 0 12px; font-size:15px; }
-  .file { margin:8px 0; }
-  .file label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
-  .file input[type=file]{ width:100%; font-size:12px; color:var(--fg); background:#0d1117;
-        border:1px solid var(--line); border-radius:6px; padding:6px; }
-  button { cursor:pointer; border:0; border-radius:7px; padding:10px 14px; font-weight:600; }
-  .primary { background:var(--accent); color:#06121f; width:100%; margin-top:12px; }
-  .ghost { background:transparent; color:var(--accent); border:1px solid var(--accent);
-           width:100%; margin-top:8px; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  #status { font-size:12px; color:var(--muted); margin-top:10px; min-height:18px; }
-  .log { background:#0d1117; border:1px solid var(--line); border-radius:10px; min-height:70vh;
-         max-height:80vh; overflow-y:auto; padding:16px; font-family:var(--mono); font-size:13px; }
-  .ev { margin:0 0 12px; padding:8px 10px; border-left:3px solid var(--line); background:rgba(255,255,255,.02); }
-  .ev .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.03em;
-             text-transform:uppercase; padding:2px 7px; border-radius:5px; margin-bottom:6px; }
-  .tag.reason { background:#1f2a38; color:var(--accent); }
-  .tag.extract { background:#12291b; color:var(--ok); }
-  .tag.sql { background:#2a1f0e; color:var(--warn); }
-  .tag.localize { background:#2a1320; color:#f778ba; }
-  .tag.header { background:#1f2a38; color:var(--accent); }
-  .tag.done { background:#12291b; color:var(--ok); }
-  .ev pre { margin:6px 0 0; white-space:pre-wrap; word-break:break-word; color:var(--fg); }
-  .kv { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:6px; color:var(--muted); }
-  .kv b { color:var(--fg); font-weight:600; }
-  .verdict { margin-top:6px; font-size:12px; }
-  .verdict .ok { color:var(--ok); } .verdict .bad { color:var(--err); }
-  .verdict .warn { color:var(--warn); }
-  .empty { color:var(--muted); text-align:center; padding-top:30vh; }
+  html,body { margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--serif); -webkit-font-smoothing:antialiased; }
+  a { color:var(--accent); text-decoration:none; } a:hover { color:var(--navy); text-decoration:underline; }
+  ::selection { background:var(--sel); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  body { min-height:100vh; padding:0 0 64px; }
+  .page { max-width:1440px; margin:0 auto; padding:22px 24px 0; }
+
+  /* ── top bar ── */
+  .masthead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px 24px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .mark { width:26px; height:26px; background:var(--navy); position:relative; flex:none; align-self:center; }
+  .mark::after { content:""; position:absolute; left:5px; top:5px; width:16px; height:16px; border:2px solid var(--cyan); }
+  .brand h1 { font:600 25px/1 var(--serif); letter-spacing:-.01em; white-space:nowrap; margin:0; }
+  .brand small { font:400 13px/1 var(--mono); color:var(--muted); letter-spacing:.02em; }
+  .who { display:flex; align-items:center; gap:18px; padding-bottom:2px; }
+  .who .ctx { font:400 12px/1.3 var(--mono); color:var(--muted); text-align:right; }
+  .badge { display:flex; align-items:center; gap:8px; padding:5px 10px; background:var(--sel);
+    color:var(--navy); font:600 12px/1 var(--mono); }
+  .badge::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--ok); display:inline-block; }
+
+  /* ── tab bar ── */
+  .tabs { display:flex; gap:2px; margin-top:26px; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
+  .tab { cursor:default; border:0; background:transparent; padding:11px 18px 12px;
+    font:600 15px/1 var(--serif); color:var(--ink); border-bottom:2.5px solid transparent; margin-bottom:-1px; }
+  .tab span { font:400 11px var(--mono); color:var(--muted); margin-left:7px; }
+
+  main { display:flex; flex-wrap:wrap; gap:38px; padding-top:30px; align-items:flex-start; }
+  @media (max-width:900px){ main { flex-direction:column; } }
+
+  /* left column — Inputs */
+  .spec { flex:1 1 340px; min-width:0; max-width:420px; }
+  .spec h2 { font:600 17px/1.2 var(--serif); margin:0; }
+  .spec .lede { font:400 13px/1.55 var(--serif); color:var(--muted); margin-top:5px; max-width:34ch; text-wrap:pretty; }
+  .files { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+  .file { display:flex; align-items:center; gap:12px; padding:11px 13px; background:var(--card); border-left:3px solid var(--accent); }
+  .file .ext { font:700 10px/1 var(--mono); color:var(--navy); background:var(--sel); padding:5px 6px; letter-spacing:.04em; }
+  .file .meta { min-width:0; flex:1; }
+  .file .role { font:400 11px/1 var(--mono); color:var(--muted); letter-spacing:.03em; text-transform:uppercase; }
+  .file .name { font:500 13px/1.3 var(--mono); color:var(--ink); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file .size { font:400 11px/1 var(--mono); color:var(--muted); }
+  #src,#rep,#xlsx { display:none; }
+
+  .subhead { margin-top:26px; font:600 14px/1.2 var(--serif); }
+  .subhead span { font:400 12px var(--mono); color:var(--muted); }
+  .note { margin-top:8px; padding:13px 14px; background:var(--card); border-left:3px solid var(--cyan); }
+  .note p { font:400 14px/1.6 var(--serif); color:var(--ink); text-wrap:pretty; margin:0; }
+  .note .foot { display:flex; justify-content:space-between; align-items:center; margin-top:11px; font:400 11px/1 var(--mono); color:var(--muted); }
+  .note .foot a { color:var(--accent); }
+  .hint { font:400 12px/1.55 var(--serif); color:var(--muted); margin-top:9px; max-width:36ch; }
+
+  .actions { display:flex; gap:10px; margin-top:26px; flex-wrap:wrap; }
+  button { cursor:pointer; font-family:var(--serif); }
+  .btn-primary { border:0; padding:12px 20px; background:var(--accent); color:#fff; font:600 14px/1 var(--serif); }
+  .btn-primary:hover { background:var(--navy); }
+  .btn-secondary { padding:12px 18px; background:transparent; color:var(--accent); border:1px solid var(--accent); font:600 14px/1 var(--serif); }
+  .btn-secondary:hover { background:var(--hover); }
+  .btn-quiet { padding:12px 18px; background:transparent; color:var(--muted); border:1px solid var(--rule); font:600 14px/1 var(--serif); }
+  .btn-quiet:hover { color:var(--ink); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .est { font:400 11px/1.5 var(--mono); color:var(--muted); margin-top:11px; }
+  #status { font:400 12px/1.5 var(--mono); color:var(--muted); margin-top:9px; min-height:18px; }
+
+  /* right column — trace */
+  .trace { flex:2 1 560px; min-width:0; }
+  .trace-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px 20px; flex-wrap:wrap; margin-bottom:16px; }
+  .trace-head h2 { font:600 17px/1.2 var(--serif); margin:0; }
+  .trace-head .meta { font:400 12px/1 var(--mono); color:var(--muted); margin-top:6px; }
+
+  .stream { background:var(--card); border:1px solid var(--rule); min-height:60vh; max-height:78vh; overflow-y:auto; }
+  .empty { color:var(--muted); text-align:center; padding-top:28vh; }
+
+  .ev { padding:15px 17px 17px; border-bottom:1px solid var(--rowrule); }
+  .ev .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .tag { font:700 10px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; padding:4px 7px; }
+  .tag.header { background:var(--flatbg); color:var(--flat); }
+  .tag.reason { background:var(--sel); color:var(--navy); }
+  .tag.extract { background:var(--okbg); color:var(--ok); }
+  .tag.sql { background:var(--warnbg); color:var(--warn); }
+  .tag.localize { background:var(--badbg); color:var(--bad); }
+  .tag.done { background:var(--okbg); color:var(--ok); }
+  .ev .t { font:400 11px/1 var(--mono); color:var(--soft); }
+  .ev .head { font:400 11px/1 var(--mono); color:var(--muted); }
+  .ev .body { font:400 14.5px/1.62 var(--serif); margin-top:9px; max-width:82ch; text-wrap:pretty; }
+  .ev pre { margin:10px 0 0; padding:11px 13px; background:var(--paper); border-left:2px solid var(--rule);
+    font:400 12.5px/1.6 var(--mono); color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+  .kv { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:10px; }
+  .kv span { font:400 12px/1 var(--mono); color:var(--soft); }
+  .kv b { color:var(--navy); font-weight:700; }
+  .verdict { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
+  .verdict .lbl { font:400 11px/1 var(--mono); color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+  .chip { font:500 11.5px/1 var(--mono); padding:5px 8px; }
+  .chip.ok { background:var(--okbg); color:var(--ok); }
+  .chip.bad { background:var(--badbg); color:var(--bad); }
+  .chip.warn { background:var(--warnbg); color:var(--warn); }
+  .chip.flat { background:var(--flatbg); color:var(--flat); }
+  .ev .note { margin-top:8px; padding:0; background:transparent; border-left:3px solid var(--cyan); padding-left:12px;
+    font:italic 400 13px/1.55 var(--serif); color:var(--muted); }
+  .ev .note .foot { display:none; }
   code { font-family:var(--mono); }
-  .mono { font-family:var(--mono); }
-  #clear { margin-top:10px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>SAS Reconcile SLM — live debug demo</h1>
-  <p>Load two corresponding <code>.egp</code> SAS projects and an <code>.xlsx</code> of suspect
-     cycles, then watch the agent debug the discrepancy in real time.</p>
-</header>
-<main>
-  <div class="card">
-    <h2>Inputs</h2>
-    <div class="file">
-      <label>Source project (.egp)</label>
-      <input type="file" id="src" accept=".egp,.zip">
+<div class="page">
+
+  <div class="masthead">
+    <div class="brand">
+      <div class="mark"></div>
+      <h1>SAS Reconcile</h1>
+      <small>sas-debugger · SLM 0.5B · best-of-6 · live debug</small>
     </div>
-    <div class="file">
-      <label>Reporting project (.egp)</label>
-      <input type="file" id="rep" accept=".egp,.zip">
+    <div class="who">
+      <div class="ctx">Riesgos · Reporting Regulatorio<br>IRB / IFRS 9 / CRR</div>
+      <div class="badge">D. Rodríguez · Captain</div>
     </div>
-    <div class="file">
-      <label>Suspect cycles (.xlsx)</label>
-      <input type="file" id="xlsx" accept=".xlsx">
-    </div>
-    <button class="primary" id="run">▶ Run with sample assets</button>
-    <button class="ghost" id="runfiles">Run with my files</button>
-    <button class="ghost" id="clear">Clear</button>
-    <div id="status">Ready. The bundled sample assets are pre-loaded if you don't pick files.</div>
   </div>
 
-  <div class="card">
-    <h2>Agent debug trace</h2>
-    <div class="log" id="log"><div class="empty">Press <b>Run</b> to start…</div></div>
+  <div class="tabs">
+    <a class="tab" href="/">Load <span>3 files</span></a>
+    <span class="tab">Live run <span>SSE</span></span>
+    <span class="tab">Localisation <span>root cause</span></span>
+    <span class="tab">Lineage <span>8 tables</span></span>
+    <span class="tab">Model <span>n=268</span></span>
   </div>
-</main>
+
+  <main>
+    <section class="spec">
+      <h2>Inputs</h2>
+      <div class="lede">Two corresponding SAS projects and the Excel of cycles you doubt. Nothing leaves the perimeter.</div>
+
+      <div class="files">
+        <label class="file">
+          <span class="ext">EGP</span>
+          <span class="meta">
+            <span class="role">Source project</span>
+            <span class="name" id="srcName">proyecto_origen_riesgos.egp</span>
+          </span>
+          <span class="size">default</span>
+          <input type="file" id="src" accept=".egp,.zip">
+        </label>
+        <label class="file">
+          <span class="ext">EGP</span>
+          <span class="meta">
+            <span class="role">Reporting project</span>
+            <span class="name" id="repName">proyecto_reporting_ciclos.egp</span>
+          </span>
+          <span class="size">default</span>
+          <input type="file" id="rep" accept=".egp,.zip">
+        </label>
+        <label class="file">
+          <span class="ext">XLSX</span>
+          <span class="meta">
+            <span class="role">Suspect cycles</span>
+            <span class="name" id="xlsxName">ciclos_dudosos_2024H2.xlsx</span>
+          </span>
+          <span class="size">default</span>
+          <input type="file" id="xlsx" accept=".xlsx">
+        </label>
+      </div>
+
+      <div class="subhead">What looks wrong <span>· in your words</span></div>
+      <div class="note">
+        <p>ECL for the CORP cycles in 2024H2 comes out much higher than we expect. I checked the final formula by hand and it looks fine. Other partitions of the same contracts look normal. I don't know why.</p>
+        <div class="foot"><span>batch note · attached to all 1,412 cycles</span><a href="#" onclick="return false">edit</a></div>
+      </div>
+      <div class="hint">No format required. The model reads it as the captain's hypothesis and weights the lineage search accordingly.</div>
+
+      <div class="actions">
+        <button class="btn-primary" id="run">▶ Run localisation</button>
+        <button class="btn-secondary" id="runfiles">Dry run · my files</button>
+        <button class="btn-quiet" id="clear">Clear</button>
+      </div>
+      <div class="est">bundled sample assets · src_basilea.egp + rep_lgd.egp + ciclos_sospechosos.xlsx<br>est. 6 min 40 s · 1,412 cycles · 6 samples/cycle</div>
+      <div id="status">Ready. The bundled sample assets are pre-loaded if you don't pick files.</div>
+    </section>
+
+    <section class="trace">
+      <div class="trace-head">
+        <div>
+          <h2>Agent debug trace</h2>
+          <div class="meta">streamed over SSE · reasoning, key-table extractions, diagnostic SQL, oracle verdicts</div>
+        </div>
+      </div>
+      <div class="stream" id="log"><div class="empty">Press <b>Run</b> to start…</div></div>
+    </section>
+  </main>
+
+</div>
 
 <script>
 const log = document.getElementById('log');
@@ -92,19 +215,25 @@ const runFilesBtn = document.getElementById('runfiles');
 const clearBtn = document.getElementById('clear');
 let es = null;
 
+const TONES = { ok:'ok', bad:'bad', warn:'warn', flat:'flat' };
+function chip(label, tone){ return `<span class="chip ${TONES[tone]}">${label}</span>`; }
+
 function append(tag, html){
   const empty = log.querySelector('.empty'); if (empty) empty.remove();
   const el = document.createElement('div'); el.className='ev';
-  el.innerHTML = `<span class="tag ${tag}">${tag}</span>` + html;
+  el.innerHTML = `<div class="row"><span class="tag ${tag}">${tag}</span>${html}</div>`;
   log.appendChild(el); log.scrollTop = log.scrollHeight;
 }
 
 function fmtVerdict(v){
-  const cls = (ok)=> ok ? 'ok' : (v.false_positive ? 'warn' : 'bad');
-  return `<div class="verdict">valid=<b class="${v.valid?'ok':'bad'}">${v.valid}</b> ·
-    caught=<b class="${v.caught?'ok':'bad'}">${v.caught}</b> ·
-    false_positive=<b class="${v.false_positive?'bad':'ok'}">${v.false_positive}</b> ·
-    trap rows=<b>${v.trap_rows}</b> · clean rows=<b>${v.clean_rows}</b></div>`;
+  const ok = (b)=> b ? 'ok' : (v.false_positive ? 'warn' : 'bad');
+  return `<div class="verdict"><span class="lbl">oracle</span>`
+    + chip(`valid ${v.valid}`, v.valid?'ok':'bad')
+    + chip(`caught ${v.caught}`, v.caught?'ok':'bad')
+    + chip(`false_positive ${v.false_positive}`, v.false_positive?'bad':'ok')
+    + chip(`trap rows ${v.trap_rows}`, 'flat')
+    + chip(`clean rows ${v.clean_rows}`, 'flat')
+    + `</div>`;
 }
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -112,37 +241,38 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function handle(ev){
   switch(ev.kind){
     case 'header': {
-      let h = `<div class="kv"><b>Source project:</b> ${esc(ev.source_project)}</div>
-               <div class="kv"><b>Reporting project:</b> ${esc(ev.report_project)}</div>
-               <div class="kv"><b>Suspects loaded:</b> ${ev.suspects}</div>
-               <div class="kv"><b>Flagged cycle:</b> <code>${esc(ev.suspect_id)}</code></div>`;
-      append('header', h);
+      const kv = `<div class="kv"><span><b>Source project</b> ${esc(ev.source_project)}</span>
+        <span><b>Reporting project</b> ${esc(ev.report_project)}</span>
+        <span><b>Suspects</b> ${ev.suspects}</span>
+        <span><b>Flagged</b> <code>${esc(ev.suspect_id)}</code></span></div>`;
+      append('header', `<div class="body">Session opened — suspicion ready.</div>` + kv);
       statusEl.textContent = 'Debugging ' + ev.suspect_id + ' …';
       break;
     }
-    case 'reason': append('reason', `<div>${esc(ev.text)}</div>`); break;
+    case 'reason':
+      append('reason', `<div class="body">${esc(ev.text)}</div>`); break;
     case 'extract': {
-      let h = `<div class="kv"><b>Key-table extraction</b> — <code>${esc(ev.table)}</code></div>
+      let h = `<div class="kv"><span><b>Key-table extraction</b> — <code>${esc(ev.table)}</code></span></div>
                <pre>${esc(ev.sql)}</pre>`;
       if (ev.rows){
         const cols = Object.keys(ev.rows);
         h += `<div class="kv">` + cols.map(c=>`<span><b>${esc(c)}</b>=${esc(ev.rows[c])}</span>`).join('') + `</div>`;
       }
-      if (ev.note) h += `<div class="verdict">${esc(ev.note)}</div>`;
+      if (ev.note) h += `<div class="note"><p>${esc(ev.note)}</p></div>`;
       append('extract', h); break;
     }
-    case 'sql': append('sql', `<pre>${esc(ev.sql)}</pre>` + fmtVerdict(ev.verdict)); break;
+    case 'sql':
+      append('sql', `<pre>${esc(ev.sql)}</pre>` + fmtVerdict(ev.verdict)); break;
     case 'localize': {
       const rc = ev.root_cause;
-      let h = `<div class="kv"><b>table</b>=<code>${esc(rc.table)}</code></div>
-               <div class="kv"><b>columns</b>=<code>${esc(rc.columns.join(', '))}</code></div>
-               <div class="kv"><b>transformation</b></div>
+      let h = `<div class="kv"><span><b>table</b> <code>${esc(rc.table)}</code></span>
+               <span><b>columns</b> <code>${esc(rc.columns.join(', '))}</code></span></div>
                <pre>${esc(rc.transformation)}</pre>
-               <div class="kv"><b>reason</b></div><pre>${esc(rc.reason)}</pre>`;
+               <pre>${esc(rc.reason)}</pre>`;
       append('localize', h); break;
     }
     case 'done': {
-      append('done', `<div>${esc(ev.summary)}</div>`);
+      append('done', `<div class="body">${esc(ev.summary)}</div>`);
       statusEl.textContent = 'Done — see localisation.';
       runBtn.disabled = false; runFilesBtn.disabled = false;
       break;
@@ -161,6 +291,9 @@ async function run(useFiles){
   if (useFiles){ if(src) fd.append('src', src); if(rep) fd.append('rep', rep); if(xlsx) fd.append('xlsx', xlsx); }
   const res = await fetch('/api/session', { method:'POST', body: useFiles ? fd : undefined });
   const data = await res.json();
+  document.getElementById('srcName').textContent = data.src;
+  document.getElementById('repName').textContent = data.rep;
+  document.getElementById('xlsxName').textContent = data.xlsx;
   statusEl.textContent = 'Loaded ' + data.src + ' + ' + data.rep + ' + ' + data.xlsx;
   if (es) es.close();
   es = new EventSource('/api/debug/' + data.session_id);

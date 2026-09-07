@@ -1,0 +1,12 @@
+[
+  {
+    "rows": 5000000,
+    "build_s": 40.67,
+    "db_mb": 2490.0,
+    "hypA_s": 0.28,
+    "hypB_s": 4.375,
+    "hypB_rows": 1,
+    "hypA_rows": 0,
+    "correct": true
+  }
+]
