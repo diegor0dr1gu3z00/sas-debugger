@@ -1,0 +1,25 @@
+{
+  "n": 268,
+  "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter": "checkpoints/sft-0.5b/lora",
+  "oracle_baseline": {
+    "n": 268,
+    "valid_query_rate": 1.0,
+    "catch_rate": 1.0,
+    "false_positive_rate": 0.0,
+    "precision_closed": 1.0,
+    "localization_accuracy": 1.0,
+    "extraction_useful": 1.0,
+    "overall_success": 1.0
+  },
+  "model": {
+    "n": 268,
+    "valid_query_rate": 0.8619,
+    "catch_rate": 0.7164,
+    "false_positive_rate": 0.0187,
+    "precision_closed": 0.6978,
+    "localization_accuracy": 0.7015,
+    "extraction_useful": 0.8619,
+    "overall_success": 0.6978
+  }
+}

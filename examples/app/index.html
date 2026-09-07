@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SAS Reconcile SLM — live debug demo</title>
+<style>
+  :root { --bg:#0f1419; --panel:#161d26; --fg:#e6edf3; --muted:#8b98a5;
+          --line:#26303b; --accent:#4ea1ff; --ok:#3fb950; --warn:#d29922;
+          --err:#f85149; --mono:'JetBrains Mono',ui-monospace,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+  main { max-width:1180px; margin:0 auto; padding:20px 24px; display:grid;
+         grid-template-columns:360px 1fr; gap:20px; }
+  @media (max-width:900px){ main{ grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .card h2 { margin:0 0 12px; font-size:15px; }
+  .file { margin:8px 0; }
+  .file label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .file input[type=file]{ width:100%; font-size:12px; color:var(--fg); background:#0d1117;
+        border:1px solid var(--line); border-radius:6px; padding:6px; }
+  button { cursor:pointer; border:0; border-radius:7px; padding:10px 14px; font-weight:600; }
+  .primary { background:var(--accent); color:#06121f; width:100%; margin-top:12px; }
+  .ghost { background:transparent; color:var(--accent); border:1px solid var(--accent);
+           width:100%; margin-top:8px; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  #status { font-size:12px; color:var(--muted); margin-top:10px; min-height:18px; }
+  .log { background:#0d1117; border:1px solid var(--line); border-radius:10px; min-height:70vh;
+         max-height:80vh; overflow-y:auto; padding:16px; font-family:var(--mono); font-size:13px; }
+  .ev { margin:0 0 12px; padding:8px 10px; border-left:3px solid var(--line); background:rgba(255,255,255,.02); }
+  .ev .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.03em;
+             text-transform:uppercase; padding:2px 7px; border-radius:5px; margin-bottom:6px; }
+  .tag.reason { background:#1f2a38; color:var(--accent); }
+  .tag.extract { background:#12291b; color:var(--ok); }
+  .tag.sql { background:#2a1f0e; color:var(--warn); }
+  .tag.localize { background:#2a1320; color:#f778ba; }
+  .tag.header { background:#1f2a38; color:var(--accent); }
+  .tag.done { background:#12291b; color:var(--ok); }
+  .ev pre { margin:6px 0 0; white-space:pre-wrap; word-break:break-word; color:var(--fg); }
+  .kv { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:6px; color:var(--muted); }
+  .kv b { color:var(--fg); font-weight:600; }
+  .verdict { margin-top:6px; font-size:12px; }
+  .verdict .ok { color:var(--ok); } .verdict .bad { color:var(--err); }
+  .verdict .warn { color:var(--warn); }
+  .empty { color:var(--muted); text-align:center; padding-top:30vh; }
+  code { font-family:var(--mono); }
+  .mono { font-family:var(--mono); }
+  #clear { margin-top:10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SAS Reconcile SLM — live debug demo</h1>
+  <p>Load two corresponding <code>.egp</code> SAS projects and an <code>.xlsx</code> of suspect
+     cycles, then watch the agent debug the discrepancy in real time.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>Inputs</h2>
+    <div class="file">
+      <label>Source project (.egp)</label>
+      <input type="file" id="src" accept=".egp,.zip">
+    </div>
+    <div class="file">
+      <label>Reporting project (.egp)</label>
+      <input type="file" id="rep" accept=".egp,.zip">
+    </div>
+    <div class="file">
+      <label>Suspect cycles (.xlsx)</label>
+      <input type="file" id="xlsx" accept=".xlsx">
+    </div>
+    <button class="primary" id="run">▶ Run with sample assets</button>
+    <button class="ghost" id="runfiles">Run with my files</button>
+    <button class="ghost" id="clear">Clear</button>
+    <div id="status">Ready. The bundled sample assets are pre-loaded if you don't pick files.</div>
+  </div>
+
+  <div class="card">
+    <h2>Agent debug trace</h2>
+    <div class="log" id="log"><div class="empty">Press <b>Run</b> to start…</div></div>
+  </div>
+</main>
+
+<script>
+const log = document.getElementById('log');
+const statusEl = document.getElementById('status');
+const runBtn = document.getElementById('run');
+const runFilesBtn = document.getElementById('runfiles');
+const clearBtn = document.getElementById('clear');
+let es = null;
+
+function append(tag, html){
+  const empty = log.querySelector('.empty'); if (empty) empty.remove();
+  const el = document.createElement('div'); el.className='ev';
+  el.innerHTML = `<span class="tag ${tag}">${tag}</span>` + html;
+  log.appendChild(el); log.scrollTop = log.scrollHeight;
+}
+
+function fmtVerdict(v){
+  const cls = (ok)=> ok ? 'ok' : (v.false_positive ? 'warn' : 'bad');
+  return `<div class="verdict">valid=<b class="${v.valid?'ok':'bad'}">${v.valid}</b> ·
+    caught=<b class="${v.caught?'ok':'bad'}">${v.caught}</b> ·
+    false_positive=<b class="${v.false_positive?'bad':'ok'}">${v.false_positive}</b> ·
+    trap rows=<b>${v.trap_rows}</b> · clean rows=<b>${v.clean_rows}</b></div>`;
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function handle(ev){
+  switch(ev.kind){
+    case 'header': {
+      let h = `<div class="kv"><b>Source project:</b> ${esc(ev.source_project)}</div>
+               <div class="kv"><b>Reporting project:</b> ${esc(ev.report_project)}</div>
+               <div class="kv"><b>Suspects loaded:</b> ${ev.suspects}</div>
+               <div class="kv"><b>Flagged cycle:</b> <code>${esc(ev.suspect_id)}</code></div>`;
+      append('header', h);
+      statusEl.textContent = 'Debugging ' + ev.suspect_id + ' …';
+      break;
+    }
+    case 'reason': append('reason', `<div>${esc(ev.text)}</div>`); break;
+    case 'extract': {
+      let h = `<div class="kv"><b>Key-table extraction</b> — <code>${esc(ev.table)}</code></div>
+               <pre>${esc(ev.sql)}</pre>`;
+      if (ev.rows){
+        const cols = Object.keys(ev.rows);
+        h += `<div class="kv">` + cols.map(c=>`<span><b>${esc(c)}</b>=${esc(ev.rows[c])}</span>`).join('') + `</div>`;
+      }
+      if (ev.note) h += `<div class="verdict">${esc(ev.note)}</div>`;
+      append('extract', h); break;
+    }
+    case 'sql': append('sql', `<pre>${esc(ev.sql)}</pre>` + fmtVerdict(ev.verdict)); break;
+    case 'localize': {
+      const rc = ev.root_cause;
+      let h = `<div class="kv"><b>table</b>=<code>${esc(rc.table)}</code></div>
+               <div class="kv"><b>columns</b>=<code>${esc(rc.columns.join(', '))}</code></div>
+               <div class="kv"><b>transformation</b></div>
+               <pre>${esc(rc.transformation)}</pre>
+               <div class="kv"><b>reason</b></div><pre>${esc(rc.reason)}</pre>`;
+      append('localize', h); break;
+    }
+    case 'done': {
+      append('done', `<div>${esc(ev.summary)}</div>`);
+      statusEl.textContent = 'Done — see localisation.';
+      runBtn.disabled = false; runFilesBtn.disabled = false;
+      break;
+    }
+  }
+}
+
+async function run(useFiles){
+  runBtn.disabled = true; runFilesBtn.disabled = true;
+  log.innerHTML = '<div class="empty">Starting debug session…</div>';
+  statusEl.textContent = 'Uploading inputs…';
+  const fd = new FormData();
+  const src = document.getElementById('src').files[0];
+  const rep = document.getElementById('rep').files[0];
+  const xlsx = document.getElementById('xlsx').files[0];
+  if (useFiles){ if(src) fd.append('src', src); if(rep) fd.append('rep', rep); if(xlsx) fd.append('xlsx', xlsx); }
+  const res = await fetch('/api/session', { method:'POST', body: useFiles ? fd : undefined });
+  const data = await res.json();
+  statusEl.textContent = 'Loaded ' + data.src + ' + ' + data.rep + ' + ' + data.xlsx;
+  if (es) es.close();
+  es = new EventSource('/api/debug/' + data.session_id);
+  es.onmessage = (m)=>{ handle(JSON.parse(m.data)); };
+  es.onerror = ()=>{ /* EventSource retries automatically; the server keeps it open */ };
+}
+
+runBtn.onclick = ()=> run(false);
+runFilesBtn.onclick = ()=> run(true);
+clearBtn.onclick = ()=>{ log.innerHTML = '<div class="empty">Press <b>Run</b> to start…</div>';
+                         statusEl.textContent = 'Ready.'; };
+</script>
+</body>
+</html>

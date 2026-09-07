@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[c]
+*.egg-info/
+.venv/
+venv/
+
+# Agent harness config (not part of the shipped project)
+.opencode/
+.agents/
+.nomad/
+
+# Generated training data (large, reproducible)
+data/generated/*.jsonl
+data/generated/*.part
+data/*.db
+
+# Model checkpoints / training artifacts
+checkpoints/
+runs/
+*.safetensors
+*.bin
+*.pt
+out/
+
+# HF cache / downloads
+.cache/
+*.log
+
+# Local scratch
+scratch/

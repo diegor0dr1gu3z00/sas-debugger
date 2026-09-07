@@ -1,0 +1,25 @@
+{
+  "n": 268,
+  "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter": "none",
+  "oracle_baseline": {
+    "n": 268,
+    "valid_query_rate": 1.0,
+    "catch_rate": 1.0,
+    "false_positive_rate": 0.0,
+    "precision_closed": 1.0,
+    "localization_accuracy": 1.0,
+    "extraction_useful": 1.0,
+    "overall_success": 1.0
+  },
+  "model": {
+    "n": 268,
+    "valid_query_rate": 0.0,
+    "catch_rate": 0.0,
+    "false_positive_rate": 0.0,
+    "precision_closed": 0.0,
+    "localization_accuracy": 0.0,
+    "extraction_useful": 0.0,
+    "overall_success": 0.0
+  }
+}

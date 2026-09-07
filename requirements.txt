@@ -1,0 +1,24 @@
+# Training environment (SFT-first, QLoRA). Python 3.11 venv recommended.
+# torch 2.14+ wheels ship with CUDA 13 support (Blackwell sm_120) — install the
+# matching cuXXX wheel for your PATH, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu130
+torch>=2.6
+transformers>=4.45
+peft>=0.12
+trl>=0.12
+datasets>=2.20
+accelerate>=0.34
+bitsandbytes>=0.44        # required for QLoRA; must support Blackwell sm_120
+safetensors>=0.4
+tokenizers>=0.20
+huggingface_hub>=0.24
+pandas>=2.0
+numpy>=1.26
+tensorboard>=2.16
+scikit-learn>=1.4
+
+# Demo web app (examples/app) — optional
+fastapi>=0.110
+uvicorn[standard]>=0.29
+openpyxl>=3.1
+python-multipart>=0.0.9
