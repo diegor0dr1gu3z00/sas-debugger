@@ -34,8 +34,8 @@ the diagnostic SQL query it needs.
   → 0.25 greedy / **0.63 best-of-4** — the contract transfers; `loc` on new
   schemas is the gap. The old `checkpoints/sft-0.5b/` adapter remains the
   specialist for the synthetic bank pipeline (0.70 there); the two regimes use
-  different contracts — keep both adapters. Adapter weights ship on the
-  GitHub release (code repo ignores `checkpoints/`).
+  different contracts — keep both adapters. Adapter weights are committed
+  in-repo (`checkpoints/*/lora/`) and also attached to the GitHub release.
 
 ## Post-training pipeline (rerunnable)
 

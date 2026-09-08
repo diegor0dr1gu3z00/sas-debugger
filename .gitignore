@@ -15,10 +15,18 @@ data/generated/*.jsonl
 data/generated/*.part
 data/*.db
 
-# Model checkpoints / training artifacts
-checkpoints/
-runs/
+# Model checkpoints / training artifacts (only the lora adapters ship in-repo)
+checkpoints/*
+!checkpoints/sft-0.5b
+!checkpoints/sft-0.5b-ext
+checkpoints/sft-0.5b/*
+!checkpoints/sft-0.5b/lora
+checkpoints/sft-0.5b-ext/*
+!checkpoints/sft-0.5b-ext/lora
 *.safetensors
+!checkpoints/sft-0.5b/lora/adapter_model.safetensors
+!checkpoints/sft-0.5b-ext/lora/adapter_model.safetensors
+runs/
 *.bin
 *.pt
 out/
