@@ -70,6 +70,51 @@ key-table extractions, only 1.9% false positives) and the deep lineage, but a
 clean way to close the gap. Stage-2 GRPO is prepared but **gated** (see
 `TRAINING_REPORT.md`).
 
+## Generalization: real production databases + db-debug-rl
+
+The synthetic catalog above is the training core. Generalization is validated
+on **12 downloaded production-style databases** (chinook, northwind, sakila x2,
+world, menagerie, classicmodels, f1db, openflights, imdb 10.7M rows, TPC-H,
+TPC-DS — all SQLite under `data/external/sql/`) plus **16 real `.sas7bdat`**
+files. Sources/licenses: `data/external/manifest.json`; rerun with
+`bash scripts/build_validation_dbs.py`.
+
+On top of those DBs, `db_debug_rl/` is the multi-turn RL environment
+(**db-debug-rl**): the agent probes the working DB with read-only SQL, forms
+hypotheses, and must localise which table/field/transformation (join key,
+dedup, fan-out, filter, time boundary, formula, inner-vs-left) corrupted the
+reported table — 21 defects x 10 pipelines, execution-verifiable reward, plus
+**walkthroughs** (layer-by-layer lineage explanations with oracle-verified
+evidence SQL per step).
+
+```bash
+bash scripts/db_debug_rl_smoke.sh      # mutation/oracle/env/walkthrough selftest (must PASS)
+bash scripts/db_debug_rl_data.sh 8     # 168 verified episodes -> data/generated/external_episodes.jsonl
+```
+
+### External-DB benchmark (held-out: 42 episodes, execution-verified)
+
+| Model | valid | catch | FP | loc | success |
+|-------|------:|------:|---:|----:|:-------:|
+| Untrained base | 0.05 | 0.00 | 0.00 | 0.00 | **0.00** |
+| SFT (synthetic-only adapter) | 0.00 | 0.00 | 0.00 | 0.00 | **0.00** |
+| **sft-0.5b-ext (custom, greedy)** | 0.79 | 0.64 | 0.12 | 0.79 | **0.60** |
+| sft-0.5b-ext + best-of-4 | 0.90 | 0.76 | 0.10 | 0.90 | **0.74** |
+| zero-shot, never-seen pipelines | 0.44 | 0.44 | 0.00 | 0.50 | **0.25** |
+| zero-shot + best-of-4 | 0.88 | 0.88 | 0.00 | 0.69 | **0.63** |
+
+Zero-shot rows: 4 novel pipelines/defects (`ZT*`, `ZS*` in `db_debug_rl/`,
+episodes `data/generated/external_zeroshot.jsonl`) built over table paths the
+adapter never saw — no retraining. The reconciliation contract transfers;
+remaining gap is defect discrimination (`loc`), the target for more diverse
+training data / the gated GRPO stage.
+
+The custom adapter (`checkpoints/sft-0.5b-ext/`) was trained on the external
+train split (126 x6) + full synthetic replay (2,278); it specializes in the
+external-DB regime (the synthetic-only adapter transfers 0.00 there, and the
+external adapter in turn shifts the synthetic-bank contract — keep both
+adapters for both regimes). Full reports: `eval/external-benchmark-summary.json`.
+
 ## Live-debug demo app
 
 ```bash

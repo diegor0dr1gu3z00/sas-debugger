@@ -29,3 +29,9 @@ out/
 
 # Local scratch
 scratch/
+
+# External validation databases (downloaded; reproducible via
+# scripts/build_validation_dbs.py — see data/external/manifest.json)
+data/external/downloads/
+data/external/sql/
+data/external/sas/

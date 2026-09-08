@@ -1,0 +1,323 @@
+{
+  "chinook": {
+    "source": "https://raw.githubusercontent.com/lerocha/chinook-database/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite",
+    "kind": "sqlite",
+    "license": "BSD-3 (lerocha/chinook-database)",
+    "file": "sql/chinook.db",
+    "size_bytes": 1007616,
+    "tables": {
+      "Album": 347,
+      "Artist": 275,
+      "Customer": 59,
+      "Employee": 8,
+      "Genre": 25,
+      "Invoice": 412,
+      "InvoiceLine": 2240,
+      "MediaType": 5,
+      "Playlist": 18,
+      "PlaylistTrack": 8715,
+      "Track": 3503
+    },
+    "n_tables": 11,
+    "total_rows": 15607
+  },
+  "northwind": {
+    "source": "https://github.com/jpwhite3/northwind-SQLite3/raw/main/dist/northwind.db",
+    "kind": "sqlite",
+    "license": "Microsoft sample, MIT-licensed port (jpwhite3/northwind-SQLite3)",
+    "file": "sql/northwind.db",
+    "size_bytes": 24702976,
+    "tables": {
+      "Categories": 8,
+      "CustomerCustomerDemo": 0,
+      "CustomerDemographics": 0,
+      "Customers": 93,
+      "EmployeeTerritories": 49,
+      "Employees": 9,
+      "Order Details": 609283,
+      "Orders": 16282,
+      "Products": 77,
+      "Regions": 4,
+      "Shippers": 3,
+      "Suppliers": 29,
+      "Territories": 53
+    },
+    "n_tables": 13,
+    "total_rows": 625890
+  },
+  "sakila_sqlite": {
+    "source": "https://github.com/bradleygrant/sakila-sqlite3/raw/main/sakila_master.db",
+    "kind": "sqlite",
+    "license": "Sakila sample port (bradleygrant/sakila-sqlite3)",
+    "file": "sql/sakila_sqlite.db",
+    "size_bytes": 5791744,
+    "tables": {
+      "actor": 200,
+      "address": 603,
+      "category": 16,
+      "city": 600,
+      "country": 109,
+      "customer": 599,
+      "film": 1000,
+      "film_actor": 5462,
+      "film_category": 1000,
+      "film_text": 0,
+      "inventory": 4581,
+      "language": 6,
+      "payment": 16049,
+      "rental": 16044,
+      "staff": 2,
+      "store": 2
+    },
+    "n_tables": 16,
+    "total_rows": 46273
+  },
+  "world": {
+    "source": "https://downloads.mysql.com/docs/world-db.zip",
+    "kind": "mysql_dump",
+    "license": "MySQL sample data (dev.mysql.com)",
+    "convert": {
+      "tables": 3,
+      "inserts": 5302,
+      "skipped": 13
+    },
+    "file": "sql/world.db",
+    "size_bytes": 307200,
+    "tables": {
+      "city": 4079,
+      "country": 239,
+      "countrylanguage": 984
+    },
+    "n_tables": 3,
+    "total_rows": 5302
+  },
+  "sakila": {
+    "source": "https://downloads.mysql.com/docs/sakila-db.zip",
+    "kind": "mysql_dump",
+    "license": "MySQL sample data (dev.mysql.com)",
+    "convert": {
+      "tables": 16,
+      "inserts": 16,
+      "skipped": 123
+    },
+    "file": "sql/sakila.db",
+    "size_bytes": 3706880,
+    "tables": {
+      "actor": 200,
+      "address": 603,
+      "category": 16,
+      "city": 600,
+      "country": 109,
+      "customer": 599,
+      "film": 1000,
+      "film_actor": 5462,
+      "film_category": 1000,
+      "film_text": 0,
+      "inventory": 4581,
+      "language": 6,
+      "payment": 16044,
+      "rental": 16044,
+      "staff": 0,
+      "store": 2
+    },
+    "n_tables": 16,
+    "total_rows": 46266
+  },
+  "menagerie": {
+    "source": "https://downloads.mysql.com/docs/menagerie-db.zip",
+    "kind": "mysql_dump",
+    "license": "MySQL sample data (dev.mysql.com)",
+    "convert": {
+      "tables": 2,
+      "inserts": 1,
+      "skipped": 4
+    },
+    "file": "sql/menagerie.db",
+    "size_bytes": 12288,
+    "tables": {
+      "event": 10,
+      "pet": 9
+    },
+    "n_tables": 2,
+    "total_rows": 19
+  },
+  "classicmodels": {
+    "source": "https://www.mysqltutorial.org/wp-content/uploads/2018/03/mysqlsampledatabase.zip",
+    "kind": "mysql_dump",
+    "license": "mysqltutorial.org sample database",
+    "convert": {
+      "tables": 8,
+      "inserts": 8,
+      "skipped": 10
+    },
+    "file": "sql/classicmodels.db",
+    "size_bytes": 323584,
+    "tables": {
+      "customers": 122,
+      "employees": 23,
+      "offices": 7,
+      "orderdetails": 2996,
+      "orders": 326,
+      "payments": 273,
+      "productlines": 7,
+      "products": 110
+    },
+    "n_tables": 8,
+    "total_rows": 3864
+  },
+  "f1db": {
+    "source": "https://github.com/f1db/f1db/releases/download/v2026.13.0/f1db-sqlite.zip",
+    "kind": "sqlite",
+    "license": "F1 racing data (f1db, GPL/CC-derived releases)",
+    "file": "sql/f1db.db",
+    "size_bytes": 73572352,
+    "tables": {
+      "chassis": 1153,
+      "circuit": 78,
+      "circuit_layout": 160,
+      "constructor": 187,
+      "constructor_chronology": 217,
+      "continent": 7,
+      "country": 249,
+      "driver": 917,
+      "driver_family_relationship": 86,
+      "engine": 424,
+      "engine_manufacturer": 78,
+      "entrant": 830,
+      "grand_prix": 54,
+      "race": 1172,
+      "race_constructor_standing": 10632,
+      "race_data": 187314,
+      "race_driver_standing": 21495,
+      "season": 77,
+      "season_constructor": 1079,
+      "season_constructor_standing": 721,
+      "season_driver": 3416,
+      "season_driver_standing": 1681,
+      "season_engine_manufacturer": 560,
+      "season_entrant": 1799,
+      "season_entrant_chassis": 2292,
+      "season_entrant_constructor": 1925,
+      "season_entrant_driver": 3882,
+      "season_entrant_engine": 2027,
+      "season_entrant_tyre_manufacturer": 1955,
+      "season_tyre_manufacturer": 160,
+      "tyre_manufacturer": 9
+    },
+    "n_tables": 31,
+    "total_rows": 246636
+  },
+  "openflights": {
+    "source": "https://raw.githubusercontent.com/jpatokal/openflights/master/data/",
+    "kind": "csv",
+    "license": "OpenFlights.org data (ODbL)",
+    "file": "sql/openflights.db",
+    "size_bytes": 6840320,
+    "tables": {
+      "airlines": 6162,
+      "airports": 7698,
+      "countries": 0,
+      "planes": 246,
+      "routes": 67663
+    },
+    "n_tables": 5,
+    "total_rows": 81769
+  },
+  "imdb": {
+    "source": "https://datasets.imdbws.com/",
+    "kind": "csv",
+    "license": "IMDb datasets (title.basics/ratings/episode subset, non-commercial)",
+    "convert": {
+      "titles": 803100,
+      "ratings": 327527,
+      "episodes": 9541683
+    },
+    "file": "sql/imdb.db",
+    "size_bytes": 758915072,
+    "tables": {
+      "title_basics": 803100,
+      "title_episode": 9541683,
+      "title_ratings": 327527
+    },
+    "n_tables": 3,
+    "total_rows": 10672310
+  },
+  "tpch": {
+    "source": "generated (duckdb tpch dbgen)",
+    "kind": "benchmark",
+    "license": "TPC-H benchmark, generated locally (fair use, no commercial benchmarking)",
+    "file": "sql/tpch.db",
+    "size_bytes": 359505920,
+    "tables": {
+      "customer": 45000,
+      "lineitem": 1800093,
+      "nation": 25,
+      "orders": 450000,
+      "part": 60000,
+      "partsupp": 240000,
+      "region": 5,
+      "supplier": 3000
+    },
+    "n_tables": 8,
+    "total_rows": 2598123
+  },
+  "tpcds": {
+    "source": "generated (duckdb tpcds dsdgen)",
+    "kind": "benchmark",
+    "license": "TPC-DS benchmark, generated locally (fair use, no commercial benchmarking)",
+    "file": "sql/tpcds.db",
+    "size_bytes": 36331520,
+    "tables": {
+      "call_center": 1,
+      "catalog_page": 11718,
+      "catalog_returns": 2796,
+      "catalog_sales": 28745,
+      "customer": 2000,
+      "customer_address": 1000,
+      "customer_demographics": 38416,
+      "date_dim": 73049,
+      "household_demographics": 7200,
+      "income_band": 20,
+      "inventory": 46980,
+      "item": 360,
+      "promotion": 6,
+      "reason": 1,
+      "ship_mode": 20,
+      "store": 1,
+      "store_returns": 5700,
+      "store_sales": 57965,
+      "time_dim": 86400,
+      "warehouse": 1,
+      "web_page": 1,
+      "web_returns": 1389,
+      "web_sales": 14290,
+      "web_site": 1
+    },
+    "n_tables": 24,
+    "total_rows": 378060
+  },
+  "sas7bdat": {
+    "source": "https://raw.githubusercontent.com/pandas-dev/pandas/main/pandas/tests/io/sas/data/",
+    "kind": "sas",
+    "license": "SAS sample data files (pandas-dev/pandas test corpus, real-world SAS files)",
+    "n_files": 16,
+    "files": [
+      "0x40controlbyte.sas7bdat",
+      "airline.sas7bdat",
+      "cars.sas7bdat",
+      "dates_null.sas7bdat",
+      "datetime.sas7bdat",
+      "max_sas_date.sas7bdat",
+      "productsales.sas7bdat",
+      "test1.sas7bdat",
+      "test10.sas7bdat",
+      "test11.sas7bdat",
+      "test12.sas7bdat",
+      "test2.sas7bdat",
+      "test3.sas7bdat",
+      "test5.sas7bdat",
+      "test8.sas7bdat",
+      "test9.sas7bdat"
+    ]
+  }
+}

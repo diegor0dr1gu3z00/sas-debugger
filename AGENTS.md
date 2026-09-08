@@ -17,6 +17,25 @@ the diagnostic SQL query it needs.
 - A working QLoRA SFT of `Qwen/Qwen2.5-0.5B-Instruct` is in
   `checkpoints/sft-0.5b/` (adapter in `lora/`); held-out success ≈ 0.70 greedy,
   0.90 with best-of-N. Stage-2 GRPO is **prepared but gated** (not launched).
+- **Generalization set + db-debug-rl built.** 12 external production DBs
+  (SQLite, `data/external/sql/`, manifest with sources/licenses) + 16 real
+  `.sas7bdat` files; download/verify via `scripts/build_validation_dbs.py`.
+  `db_debug_rl/` = multi-turn RL env (hypotheses + joins + walkthroughs) over
+  those DBs: 10 pipelines × 21 join-focused defects, execution-verifiable
+  oracle, `SELFTEST PASS` via `bash scripts/db_debug_rl_smoke.sh`; episodes via
+  `bash scripts/db_debug_rl_data.sh` -> `data/generated/external_episodes.jsonl`.
+- **External-DB adapter trained + benchmarked.** `checkpoints/sft-0.5b-ext/`
+  (trained on external train split ×6 + full synthetic replay, ~10 min on the
+  5060 Ti): held-out external success **0.60 greedy / 0.74 best-of-4** vs
+  0.00 base & 0.00 synthetic-only adapter (42 test episodes,
+  `eval/external-benchmark-summary.json`; benchmark CLI:
+  `db_debug_rl/evaluate_lm.py`). **Zero-shot transfer measured**: 4 novel
+  never-trained pipelines (`ZT*`/`ZS*`, `data/generated/external_zeroshot.jsonl`)
+  → 0.25 greedy / **0.63 best-of-4** — the contract transfers; `loc` on new
+  schemas is the gap. The old `checkpoints/sft-0.5b/` adapter remains the
+  specialist for the synthetic bank pipeline (0.70 there); the two regimes use
+  different contracts — keep both adapters. Adapter weights ship on the
+  GitHub release (code repo ignores `checkpoints/`).
 
 ## Post-training pipeline (rerunnable)
 

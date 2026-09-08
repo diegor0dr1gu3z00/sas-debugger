@@ -1,0 +1,129 @@
+{
+  "task": "db-debug-rl held-out episodes, execution-verified mutation oracle",
+  "held_out_42": [
+    {
+      "tag": "sft-0.5b-ext greedy",
+      "n": 42,
+      "valid": 0.7857,
+      "catch": 0.6429,
+      "fp": 0.119,
+      "precise": 0.5952,
+      "loc": 0.7857,
+      "success": 0.5952
+    },
+    {
+      "tag": "sft-0.5b-ext best-of-4",
+      "n": 42,
+      "valid": 0.9048,
+      "catch": 0.7619,
+      "fp": 0.0952,
+      "precise": 0.7381,
+      "loc": 0.9048,
+      "success": 0.7381
+    },
+    {
+      "tag": "base (untrained)",
+      "n": 42,
+      "valid": 0.0476,
+      "catch": 0.0,
+      "fp": 0.0,
+      "precise": 0.0,
+      "loc": 0.0,
+      "success": 0.0
+    },
+    {
+      "tag": "sft-0.5b (synthetic-only)",
+      "n": 42,
+      "valid": 0.0,
+      "catch": 0.0,
+      "fp": 0.0,
+      "precise": 0.0,
+      "loc": 0.0,
+      "success": 0.0
+    }
+  ],
+  "zero_shot_novel_pipelines": [
+    {
+      "tag": "zero-shot novel pipelines greedy",
+      "n": 16,
+      "valid": 0.4375,
+      "catch": 0.4375,
+      "fp": 0.0,
+      "precise": 0.4375,
+      "loc": 0.5,
+      "success": 0.25
+    },
+    {
+      "tag": "zero-shot novel pipelines best-of-4",
+      "n": 16,
+      "valid": 0.875,
+      "catch": 0.875,
+      "fp": 0.0,
+      "precise": 0.875,
+      "loc": 0.6875,
+      "success": 0.625
+    }
+  ],
+  "all": [
+    {
+      "tag": "sft-0.5b-ext greedy",
+      "n": 42,
+      "valid": 0.7857,
+      "catch": 0.6429,
+      "fp": 0.119,
+      "precise": 0.5952,
+      "loc": 0.7857,
+      "success": 0.5952
+    },
+    {
+      "tag": "sft-0.5b-ext best-of-4",
+      "n": 42,
+      "valid": 0.9048,
+      "catch": 0.7619,
+      "fp": 0.0952,
+      "precise": 0.7381,
+      "loc": 0.9048,
+      "success": 0.7381
+    },
+    {
+      "tag": "zero-shot novel pipelines greedy",
+      "n": 16,
+      "valid": 0.4375,
+      "catch": 0.4375,
+      "fp": 0.0,
+      "precise": 0.4375,
+      "loc": 0.5,
+      "success": 0.25
+    },
+    {
+      "tag": "zero-shot novel pipelines best-of-4",
+      "n": 16,
+      "valid": 0.875,
+      "catch": 0.875,
+      "fp": 0.0,
+      "precise": 0.875,
+      "loc": 0.6875,
+      "success": 0.625
+    },
+    {
+      "tag": "base (untrained)",
+      "n": 42,
+      "valid": 0.0476,
+      "catch": 0.0,
+      "fp": 0.0,
+      "precise": 0.0,
+      "loc": 0.0,
+      "success": 0.0
+    },
+    {
+      "tag": "sft-0.5b (synthetic-only)",
+      "n": 42,
+      "valid": 0.0,
+      "catch": 0.0,
+      "fp": 0.0,
+      "precise": 0.0,
+      "loc": 0.0,
+      "success": 0.0
+    }
+  ]
+}

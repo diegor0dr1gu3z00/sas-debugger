@@ -1,0 +1,405 @@
+{
+  "n_defects": 25,
+  "n_pipelines": 12,
+  "failures": [],
+  "wall_s": 20.9,
+  "results": [
+    {
+      "defect_id": "CH01",
+      "pipeline": "chinook_revenue",
+      "db": "chinook",
+      "failures": [],
+      "flagged_rows": 59,
+      "planted": [
+        "29",
+        "36",
+        "50"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.0
+    },
+    {
+      "defect_id": "CH02",
+      "pipeline": "chinook_revenue",
+      "db": "chinook",
+      "failures": [],
+      "flagged_rows": 59,
+      "planted": [
+        "29",
+        "36",
+        "50"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.0
+    },
+    {
+      "defect_id": "NW01",
+      "pipeline": "northwind_orders",
+      "db": "northwind",
+      "failures": [],
+      "flagged_rows": 16282,
+      "planted": [
+        "10289",
+        "10298",
+        "10329"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.98
+    },
+    {
+      "defect_id": "NW02",
+      "pipeline": "northwind_orders",
+      "db": "northwind",
+      "failures": [],
+      "flagged_rows": 380,
+      "planted": [
+        "10332",
+        "10342",
+        "10368"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.29
+    },
+    {
+      "defect_id": "SK01",
+      "pipeline": "sakila_films",
+      "db": "sakila_sqlite",
+      "failures": [],
+      "flagged_rows": 935,
+      "planted": [
+        "30",
+        "40",
+        "56"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.09
+    },
+    {
+      "defect_id": "SK02",
+      "pipeline": "sakila_films",
+      "db": "sakila_sqlite",
+      "failures": [],
+      "flagged_rows": 958,
+      "planted": [
+        "30",
+        "40",
+        "55"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.05
+    },
+    {
+      "defect_id": "SK03",
+      "pipeline": "sakila_films",
+      "db": "sakila_sqlite",
+      "failures": [],
+      "flagged_rows": 42,
+      "planted": [
+        "671",
+        "860",
+        "701"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.02
+    },
+    {
+      "defect_id": "CM01",
+      "pipeline": "classicmodels_sales",
+      "db": "classicmodels",
+      "failures": [],
+      "flagged_rows": 122,
+      "planted": [
+        "186",
+        "205",
+        "249"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.01
+    },
+    {
+      "defect_id": "CM02",
+      "pipeline": "classicmodels_sales",
+      "db": "classicmodels",
+      "failures": [],
+      "flagged_rows": 19,
+      "planted": [
+        "448",
+        "471",
+        "496"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.0
+    },
+    {
+      "defect_id": "WO01",
+      "pipeline": "world_profile",
+      "db": "world",
+      "failures": [],
+      "flagged_rows": 145,
+      "planted": [
+        "COG",
+        "DOM",
+        "GMB"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.07
+    },
+    {
+      "defect_id": "WO02",
+      "pipeline": "world_profile",
+      "db": "world",
+      "failures": [],
+      "flagged_rows": 213,
+      "planted": [
+        "BRB",
+        "CHL",
+        "DJI"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.03
+    },
+    {
+      "defect_id": "F101",
+      "pipeline": "f1_seasons",
+      "db": "f1db",
+      "failures": [],
+      "flagged_rows": 12016,
+      "planted": [
+        "1955:nino-farina",
+        "1957:nino-farina",
+        "1959:rodger-ward"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.33
+    },
+    {
+      "defect_id": "F102",
+      "pipeline": "f1_seasons",
+      "db": "f1db",
+      "failures": [],
+      "flagged_rows": 2659,
+      "planted": [
+        "1950:jim-rathmann",
+        "1950:lee-wallard",
+        "1950:pierre-levegh"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.08
+    },
+    {
+      "defect_id": "TP01",
+      "pipeline": "tpch_margin",
+      "db": "tpch",
+      "failures": [],
+      "flagged_rows": 231330,
+      "planted": [
+        "8:759",
+        "10:11",
+        "13:2264"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 9.88
+    },
+    {
+      "defect_id": "TP02",
+      "pipeline": "tpch_margin",
+      "db": "tpch",
+      "failures": [],
+      "flagged_rows": 234217,
+      "planted": [
+        "83:84",
+        "109:860",
+        "152:1653"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 2.07
+    },
+    {
+      "defect_id": "TD01",
+      "pipeline": "tpcds_sales",
+      "db": "tpcds",
+      "failures": [],
+      "flagged_rows": 360,
+      "planted": [
+        "29",
+        "36",
+        "50"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.16
+    },
+    {
+      "defect_id": "TD02",
+      "pipeline": "tpcds_sales",
+      "db": "tpcds",
+      "failures": [],
+      "flagged_rows": 180,
+      "planted": [
+        "1"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.03
+    },
+    {
+      "defect_id": "OF01",
+      "pipeline": "openflights_routes",
+      "db": "openflights",
+      "failures": [],
+      "flagged_rows": 158,
+      "planted": [
+        "1626",
+        "1813",
+        "21317"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.12
+    },
+    {
+      "defect_id": "OF02",
+      "pipeline": "openflights_routes",
+      "db": "openflights",
+      "failures": [],
+      "flagged_rows": 546,
+      "planted": [
+        "1925",
+        "2091",
+        "241"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.01
+    },
+    {
+      "defect_id": "IM01",
+      "pipeline": "imdb_titles",
+      "db": "imdb",
+      "failures": [],
+      "flagged_rows": 304793,
+      "planted": [
+        "tt0040039",
+        "tt0040046",
+        "tt0040061"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 4.48
+    },
+    {
+      "defect_id": "IM02",
+      "pipeline": "imdb_titles",
+      "db": "imdb",
+      "failures": [],
+      "flagged_rows": 475573,
+      "planted": [
+        "tt0040990",
+        "tt0041000",
+        "tt0041031"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 2.12
+    },
+    {
+      "defect_id": "ZT01",
+      "pipeline": "chinook_tracks",
+      "db": "chinook",
+      "failures": [],
+      "flagged_rows": 2123,
+      "planted": [
+        "32",
+        "39",
+        "53"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.02
+    },
+    {
+      "defect_id": "ZT02",
+      "pipeline": "chinook_tracks",
+      "db": "chinook",
+      "failures": [],
+      "flagged_rows": 1984,
+      "planted": [
+        "42",
+        "55",
+        "85"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.01
+    },
+    {
+      "defect_id": "ZS01",
+      "pipeline": "sakila_stores",
+      "db": "sakila_sqlite",
+      "failures": [],
+      "flagged_rows": 2,
+      "planted": [
+        "1",
+        "2"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.0
+    },
+    {
+      "defect_id": "ZS02",
+      "pipeline": "sakila_stores",
+      "db": "sakila_sqlite",
+      "failures": [],
+      "flagged_rows": 2,
+      "planted": [
+        "1",
+        "2"
+      ],
+      "env_success": true,
+      "env_reward": 1.05,
+      "walkthrough_score": 1.0,
+      "build_s": 0.0
+    }
+  ],
+  "rollouts_ok": true
+}
