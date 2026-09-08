@@ -1,0 +1,60 @@
+{
+  "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter": "checkpoints/sft-0.5b-ext/lora",
+  "device": "cpu",
+  "dtype": "float32",
+  "tag": "cpu-smoke",
+  "n_test": 3,
+  "rows": [
+    {
+      "episode_id": "CH01_000",
+      "defect_id": "CH01",
+      "db": "chinook",
+      "valid": true,
+      "catch": true,
+      "fp": true,
+      "precise": false,
+      "loc": true,
+      "success": false,
+      "walkthrough": 0.0,
+      "latency_s": 27.6
+    },
+    {
+      "episode_id": "CH01_001",
+      "defect_id": "CH01",
+      "db": "chinook",
+      "valid": true,
+      "catch": true,
+      "fp": true,
+      "precise": false,
+      "loc": true,
+      "success": false,
+      "walkthrough": 0.0,
+      "latency_s": 27.8
+    },
+    {
+      "episode_id": "CH02_000",
+      "defect_id": "CH02",
+      "db": "chinook",
+      "valid": true,
+      "catch": true,
+      "fp": false,
+      "precise": true,
+      "loc": true,
+      "success": true,
+      "walkthrough": 0.0,
+      "latency_s": 27.6
+    }
+  ],
+  "wall_s": 83.0,
+  "metrics": {
+    "valid": 1.0,
+    "catch": 1.0,
+    "fp": 0.6667,
+    "precise": 0.3333,
+    "loc": 1.0,
+    "success": 0.3333,
+    "walkthrough": 0.0,
+    "n": 3
+  }
+}

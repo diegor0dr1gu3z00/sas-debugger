@@ -68,6 +68,13 @@ def load_tokenizer(name: str):
 
 
 def load_4bit_model(name: str):
+    import torch
+    if not torch.cuda.is_available():
+        # CPU fallback: plain fp32 weights (bitsandbytes 4-bit is CUDA-only).
+        from transformers import AutoModelForCausalLM as _M
+        return _M.from_pretrained(
+            name, dtype=torch.float32, device_map={"": "cpu"},
+            attn_implementation="sdpa", trust_remote_code=True)
     bnb = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",

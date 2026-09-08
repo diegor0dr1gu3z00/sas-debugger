@@ -138,6 +138,19 @@ bash scripts/eval.sh           # eval vs oracle + baselines -> eval/sft-report.j
 bash scripts/app.sh            # live-debug demo (optional)
 ```
 
+### CPU-only (32 GB RAM)
+
+Everything except QLoRA training runs on CPU: the db-debug-rl environment,
+oracle, episode generator, selftest and walkthrough verifier are pure
+SQLite/Python, and the 0.5B SLM evaluates on CPU in fp32 (measured peak
+~4 GB RAM, ~30 s/episode):
+
+```bash
+# GPU-less box: .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
+.venv/bin/python -m db_debug_rl.evaluate_lm --device cpu --dtype float32 \
+    --adapter checkpoints/sft-0.5b-ext/lora --json_out eval/ext-cpu.json
+```
+
 ## Notes
 
 - Env: RTX 5060 Ti 16 GB (Blackwell, compute 12.0). **No vLLM** (Blackwell

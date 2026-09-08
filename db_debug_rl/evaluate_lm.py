@@ -33,18 +33,34 @@ from db_debug_rl import walkthrough as wt
 from db_debug_rl.reward import parse_output
 
 
-def load_model(base_model: str, adapter: str | None):
+def load_model(base_model: str, adapter: str | None, device: str = "auto",
+               dtype: str = "auto"):
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    if dtype == "auto":
+        dtype = "bfloat16" if device == "cuda" else "float32"
     tok = AutoTokenizer.from_pretrained(
         adapter or base_model, trust_remote_code=True, use_fast=True)
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
-    model = AutoModelForCausalLM.from_pretrained(
-        base_model,
-        dtype=torch.bfloat16,
-        attn_implementation="sdpa",
-        device_map="cuda:0",
-        trust_remote_code=True,
-    )
+    torch_dtype = torch.bfloat16 if dtype == "bfloat16" else torch.float32
+    if device == "cpu":
+        torch.set_num_threads(max(1, torch.get_num_threads()))
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            dtype=torch_dtype,
+            attn_implementation="sdpa",
+            device_map={"": "cpu"},
+            trust_remote_code=True,
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            dtype=torch_dtype,
+            attn_implementation="sdpa",
+            device_map="cuda:0",
+            trust_remote_code=True,
+        )
     model.eval()
     if adapter:
         model = PeftModel.from_pretrained(model, adapter, is_trainable=False)
@@ -124,6 +140,8 @@ def main() -> None:
     ap.add_argument("--max_new_tokens", type=int, default=900)
     ap.add_argument("--best_of_n", type=int, default=0)
     ap.add_argument("--bos_sample_limit", type=int, default=12)
+    ap.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
+    ap.add_argument("--dtype", default="auto", choices=["auto", "bfloat16", "float32"])
     args = ap.parse_args()
 
     episodes = [json.loads(l) for l in open(args.test_jsonl, encoding="utf-8")
@@ -134,10 +152,11 @@ def main() -> None:
     if not test:
         raise SystemExit("no test episodes in the jsonl")
 
-    model, tok = load_model(args.base_model, args.adapter)
+    model, tok = load_model(args.base_model, args.adapter, args.device, args.dtype)
     report: dict[str, Any] = {
         "base_model": args.base_model,
         "adapter": args.adapter or "-",
+        "device": args.device, "dtype": args.dtype,
         "tag": args.tag or (Path(args.adapter).parent.name if args.adapter else "base"),
         "n_test": len(test), "rows": [], "wall_s": 0.0}
     t_all = time.time()

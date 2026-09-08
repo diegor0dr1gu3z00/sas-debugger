@@ -59,8 +59,26 @@ stored inside every episode.
 ```bash
 bash scripts/build_validation_dbs.py   # download + verify the external DBs (once)
 bash scripts/db_debug_rl_smoke.sh      # SELFTEST must PASS
-bash scripts/db_debug_rl_data.sh 4     # 84 episodes -> data/generated/external_episodes.jsonl
+bash scripts/db_debug_rl_data.sh 8     # 168 episodes -> data/generated/external_episodes.jsonl
 ```
+
+## CPU-only (32 GB RAM)
+
+The environment, oracle, episode generator, selftest and walkthrough verifier
+are pure SQLite/Python — they never need a GPU. The SLM also runs on CPU:
+a 0.5B fp32 model needs ~2 GB, the heaviest materialized environment ≤1 GB
+(measured: imdb env peak RSS 0.5 GB, tpch 0.3 GB; full CPU eval run peaks at
+~4 GB). CPU generation runs at ~30 tok/s on this 0.5B (~30 s/episode).
+
+```bash
+# on a GPU-less box: pip install torch --index-url https://download.pytorch.org/whl/cpu
+.venv/bin/python -m db_debug_rl.evaluate_lm --device cpu --dtype float32 \
+    --adapter checkpoints/sft-0.5b-ext/lora \
+    --test_jsonl data/generated/external_episodes.jsonl \
+    --json_out eval/ext-cpu.json          # full 42-episode eval ≈ 20-30 min
+```
+
+Training stays GPU-only (QLoRA/bitsandbytes 4-bit is CUDA-only).
 
 Pipelines are tagged `weight="light"|"heavy"` — restrict GRPO/eval sampling to
 light pipelines for fast rollouts; heavy ones (northwind/tpch/tpcds/imdb/f1)
