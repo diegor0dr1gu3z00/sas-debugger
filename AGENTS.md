@@ -63,7 +63,7 @@ the diagnostic SQL query it needs.
 - **Serve the adapter on llama.cpp** for the external benchmark instead of
   transformers: `scripts/llama_serve.sh` (converts base GGUF, merges the Peft
   LoRA, quantizes Q4_K_M, starts `llama-server` on :8080) then
-  `.venv/bin/python -m db_debug_rl.evaluate_lm --backend llama.cpp
+  `.venv/bin/python` (Windows: `.venv/Scripts/python.exe`) -m db_debug_rl.evaluate_lm --backend llama.cpp
   --llama_url http://127.0.0.1:8080 --test_jsonl
   data/generated/external_episodes.jsonl`. Requires `~/llama.cpp` built
   (not present yet).

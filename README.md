@@ -128,9 +128,13 @@ Bundled samples are in `examples/app_assets/`.
 
 ## Quickstart
 
+The scripts resolve the venv interpreter automatically from the layout that
+exists: `bin/` on Unix, `Scripts/` (Windows) otherwise — see `scripts/_venv.sh`.
+You do not need to type the path yourself.
+
 ```bash
 python3 -m venv --system-site-packages .venv     # reuses a working CUDA torch
-.venv/bin/pip install -r requirements.txt
+.venv/bin/pip install -r requirements.txt        # Windows: .venv/Scripts/pip.exe
 
 bash scripts/gen_data.sh       # 2,278 oracle-verified episodes (stratified)
 bash scripts/train.sh          # QLoRA SFT -> checkpoints/sft-0.5b/
@@ -146,7 +150,8 @@ SQLite/Python, and the 0.5B SLM evaluates on CPU in fp32 (measured peak
 ~4 GB RAM, ~30 s/episode):
 
 ```bash
-# GPU-less box: .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
+# GPU-less box: `.venv/bin/pip` -> `.venv/Scripts/pip.exe` on Windows
+.venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/python -m db_debug_rl.evaluate_lm --device cpu --dtype float32 \
     --adapter checkpoints/sft-0.5b-ext/lora --json_out eval/ext-cpu.json
 ```

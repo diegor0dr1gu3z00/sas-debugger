@@ -3,7 +3,8 @@
 # The council gate must clear BEFORE any GRPO run; this script never launches it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/_venv.sh
 
-.venv/bin/python -m slm.grpo_config
+"$(venv_py)" -m slm.grpo_config
 echo
 echo "GRPO stage-2 is NOT launched. See TRAINING_REPORT.md for the gate."

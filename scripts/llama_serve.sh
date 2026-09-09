@@ -7,7 +7,7 @@
 #   4. Start llama-server on the OpenAI-compatible endpoint.
 #
 # Then benchmark it against the transformers backend:
-#   .venv/bin/python -m db_debug_rl.evaluate_lm --backend llama.cpp \
+#   "$(venv_py)" -m db_debug_rl.evaluate_lm --backend llama.cpp \
 #       --llama_url http://127.0.0.1:8080 \
 #       --test_jsonl data/generated/external_episodes.jsonl \
 #       --json_out eval/external-llama.json --tag llama-ext
@@ -21,14 +21,16 @@
 #   PORT        llama-server port (default: 8080)
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+. scripts/_venv.sh
+
 LLAMA_DIR="${LLAMA_DIR:-$HOME/llama.cpp}"
 BUILD="${BUILD:-$LLAMA_DIR/build}"
 BIN="$BUILD/bin"
 ADAPTER="${ADAPTER:-checkpoints/sft-0.5b-ext/lora}"
 BASE_MODEL="${BASE_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}"
 PORT="${PORT:-8080}"
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT"
 
 [[ -d "$LLAMA_DIR" ]] || { echo "ERROR: $LLAMA_DIR not found. Clone llama.cpp:" >&2
   echo "  git clone https://github.com/ggml-org/llama.cpp $LLAMA_DIR && cmake -B $BUILD -DGGML_CUDA=ON && cmake --build $BUILD -j" >&2
@@ -37,7 +39,7 @@ for t in convert_hf_to_gguf.py llama-export-lora llama-server; do
   [[ -e "$LLAMA_DIR/$t" || -e "$BIN/$t" ]] || { echo "ERROR: missing $t — build llama.cpp ($BUILD)." >&2; exit 1; }
 done
 
-PY="${PY:-.venv/bin/python}"
+PY="${PY:-$(venv_py)}"
 
 # 1. Base GGUF (f16).
 BASE_F16="checkpoints/${BASE_MODEL##*/}-f16.gguf"
@@ -65,5 +67,5 @@ fi
 
 # 4. Serve.
 echo "llama-server on http://127.0.0.1:${PORT} (model: $MERGED)"
-echo "Then run the eval with: .venv/bin/python -m db_debug_rl.evaluate_lm --backend llama.cpp --llama_url http://127.0.0.1:${PORT} --test_jsonl data/generated/external_episodes.jsonl --tag llama"
+echo "Then run the eval with: \"$(venv_py)\" -m db_debug_rl.evaluate_lm --backend llama.cpp --llama_url http://127.0.0.1:${PORT} --test_jsonl data/generated/external_episodes.jsonl --tag llama"
 exec "$BIN/llama-server" -m "$MERGED" --host 127.0.0.1 --port "$PORT" -ngl 99

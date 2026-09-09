@@ -2,12 +2,13 @@
 # QLoRA SFT of the SAS-reconcile SLM. Edit BASE / OUT per run.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/_venv.sh
 
 BASE="${BASE:-Qwen/Qwen2.5-0.5B-Instruct}"
 OUT="${OUT:-checkpoints/sft-0.5b}"
 DATA="${DATA:-data/generated/sft.jsonl}"
 
-.venv/bin/python -m slm.train_sft \
+"$(venv_py)" -m slm.train_sft \
   --base_model "$BASE" \
   --out_dir "$OUT" \
   --data_path "$DATA" \
