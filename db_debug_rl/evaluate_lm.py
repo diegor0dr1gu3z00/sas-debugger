@@ -13,6 +13,12 @@ Usage:
         [--adapter checkpoints/sft-0.5b-ext/lora] \
         --json_out eval/external-benchmark.json [--tag name]
         [--sample_limit N] [--best_of_n 4 --bos_sample_limit N]
+
+    # LLM server backend (llama-server, OpenAI-compatible endpoint):
+    .venv/bin/python -m db_debug_rl.evaluate_lm \
+        --backend llama.cpp --llama_url http://127.0.0.1:8080 \
+        --test_jsonl data/generated/external_episodes.jsonl \
+        --json_out eval/external-benchmark.json [--tag llama]
 """
 from __future__ import annotations
 
@@ -22,9 +28,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import requests
+
+try:
+    import torch
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    _HF = True
+except ImportError:
+    _HF = False  # llama.cpp backend needs only requests
 
 from db_debug_rl.pipelines import PIPELINES
 from db_debug_rl.defects import DEFECTS_BY_ID
@@ -35,6 +47,9 @@ from db_debug_rl.reward import parse_output
 
 def load_model(base_model: str, adapter: str | None, device: str = "auto",
                dtype: str = "auto"):
+    if not (_HF and torch and PeftModel):
+        raise SystemExit("transformers/peft not available for the transformers "
+                         "backend (use --backend llama.cpp, or install deps)")
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     if dtype == "auto":
@@ -70,7 +85,11 @@ def load_model(base_model: str, adapter: str | None, device: str = "auto",
 
 
 def generate(model, tok, system: str, user: str, max_new_tokens: int = 640,
-             temperature: float = 0.0) -> str:
+             temperature: float = 0.0, backend: str = "transformers",
+             llama_url: str | None = None) -> str:
+    if backend == "llama.cpp":
+        return llama_generate(system, user, max_new_tokens, temperature,
+                              llama_url)
     do_sample = temperature > 0
     prompt = tok.apply_chat_template(
         [{"role": "system", "content": system},
@@ -88,6 +107,32 @@ def generate(model, tok, system: str, user: str, max_new_tokens: int = 640,
             pad_token_id=tok.pad_token_id or tok.eos_token_id,
         )
     return tok.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True)
+
+
+def llama_generate(system: str, user: str, max_new_tokens: int,
+                   temperature: float, llama_url: str | None) -> str:
+    """Call a llama-server OpenAI-compatible endpoint and return the reply text."""
+    if not llama_url:
+        raise SystemExit("--backend llama.cpp requires --llama_url "
+                         "(e.g. http://127.0.0.1:8080)")
+    base = llama_url.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    payload = {
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+        "max_tokens": max_new_tokens,
+        "temperature": temperature,
+        "top_p": 0.9 if temperature > 0 else 1.0,
+        "stream": False,
+    }
+    t = time.time()
+    try:
+        r = requests.post(f"{base}/chat/completions", json=payload, timeout=600)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        raise SystemExit(f"llama-server request failed ({time.time()-t:.0f}s): {e}")
+    return str(r.json()["choices"][0]["message"]["content"])
 
 
 def _as_dict(value: Any) -> dict:
@@ -142,6 +187,9 @@ def main() -> None:
     ap.add_argument("--bos_sample_limit", type=int, default=12)
     ap.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
     ap.add_argument("--dtype", default="auto", choices=["auto", "bfloat16", "float32"])
+    ap.add_argument("--backend", default="transformers",
+                    choices=["transformers", "llama.cpp"])
+    ap.add_argument("--llama_url", default=None)
     args = ap.parse_args()
 
     episodes = [json.loads(l) for l in open(args.test_jsonl, encoding="utf-8")
@@ -152,12 +200,21 @@ def main() -> None:
     if not test:
         raise SystemExit("no test episodes in the jsonl")
 
-    model, tok = load_model(args.base_model, args.adapter, args.device, args.dtype)
+    if args.backend == "llama.cpp":
+        model = tok = None
+        backend_tag = f"llama.cpp@{args.llama_url}"
+    else:
+        model, tok = load_model(args.base_model, args.adapter, args.device,
+                                args.dtype)
+        backend_tag = args.backend
     report: dict[str, Any] = {
         "base_model": args.base_model,
         "adapter": args.adapter or "-",
-        "device": args.device, "dtype": args.dtype,
-        "tag": args.tag or (Path(args.adapter).parent.name if args.adapter else "base"),
+        "device": args.device if args.backend == "transformers" else "-",
+        "dtype": args.dtype if args.backend == "transformers" else "-",
+        "backend": backend_tag,
+        "tag": args.tag or (Path(args.adapter).parent.name if args.adapter
+                           else "base"),
         "n_test": len(test), "rows": [], "wall_s": 0.0}
     t_all = time.time()
     agg: dict[str, float] = {}
@@ -172,12 +229,14 @@ def main() -> None:
                 raise RuntimeError(f"{ep['episode_id']}: planted pks drifted")
             if args.best_of_n and i < args.bos_sample_limit:
                 texts = [generate(model, tok, ep["system"], ep["user"],
-                                  args.max_new_tokens, 0.7)
+                                  args.max_new_tokens, 0.7, args.backend,
+                                  args.llama_url)
                          for _ in range(args.best_of_n)]
                 g = pick_best(env, texts)
             else:
                 g = grade_text(env, generate(model, tok, ep["system"], ep["user"],
-                                             args.max_new_tokens, 0.0))
+                                             args.max_new_tokens, 0.0,
+                                             args.backend, args.llama_url))
         finally:
             env.close()
         for k in ("valid", "catch", "fp", "precise", "loc", "success"):

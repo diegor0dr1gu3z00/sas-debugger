@@ -54,6 +54,19 @@ the diagnostic SQL query it needs.
 - Live-debug demo app (FastAPI + SSE, watch the agent stream its trace):
   `scripts/app.sh` -> http://127.0.0.1:8010 (uses the bundled two sample
   `.egp` projects + `.xlsx` of suspect cycles in `examples/app_assets/`).
+  Robust bootstrap that (re)creates `.venv` if broken: `scripts/run_demo.sh`.
+  Deterministic by default; to drive it with a real LM set `INFER_BACKEND`
+  (transformers | llama.cpp) + `INFER_ADAPTER`/`INFER_LLAMA_URL` in
+  `examples/app/server.py` (model output is graded by the real oracle). For the
+  deep bank pipeline use `INFER_ADAPTER=checkpoints/sft-0.5b/lora` (the synthetic
+  specialist; the `-ext` adapter is for external DBs, not this pipeline).
+- **Serve the adapter on llama.cpp** for the external benchmark instead of
+  transformers: `scripts/llama_serve.sh` (converts base GGUF, merges the Peft
+  LoRA, quantizes Q4_K_M, starts `llama-server` on :8080) then
+  `.venv/bin/python -m db_debug_rl.evaluate_lm --backend llama.cpp
+  --llama_url http://127.0.0.1:8080 --test_jsonl
+  data/generated/external_episodes.jsonl`. Requires `~/llama.cpp` built
+  (not present yet).
 - Env: `.venv` (Python 3.14, `--system-site-packages` reuses the CUDA torch
   2.14+cu130 already installed). GPU: RTX 5060 Ti 16 GB (Blackwell). Do NOT
   use vLLM on this GPU.

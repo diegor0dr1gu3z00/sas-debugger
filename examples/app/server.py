@@ -8,11 +8,25 @@ The page lets you load the two corresponding `.egp` projects and the `.xlsx` of
 suspect cycles (or use the bundled sample assets), then streams the agent's
 debug trace — reasoning, key-table extractions, diagnostic SQL, oracle verdicts
 and the final localisation — as Server-Sent Events.
+
+By default the trace is deterministic (a curated expert pass). To drive it with
+a real small LM, set the backend before launching:
+
+    # in-process transformers (base + optional LoRA adapter):
+    INFER_BACKEND=transformers INFER_ADAPTER=checkpoints/sft-0.5b-ext/lora \
+        .venv/bin/python examples/app/server.py
+
+    # llama-server HTTP endpoint:
+    INFER_BACKEND=llama.cpp INFER_LLAMA_URL=http://127.0.0.1:8080 \
+        .venv/bin/python examples/app/server.py
+
+The chosen backend is exported in the SSE header so the UI can show it.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from pathlib import Path
 
@@ -36,6 +50,30 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
 sessions: dict[str, dict] = {}
 
 INDEX_HTML = (HERE / "index.html").read_text(encoding="utf-8")
+
+# ── Optional real inference backend (off -> deterministic trace) ─────────────
+INFER_BACKEND = os.environ.get("INFER_BACKEND", "").strip().lower()
+INFER_MODEL = None  # lazily built generator: generate(system, user) -> str
+
+
+def _inference_generator():
+    """Build (and cache) the LM generator from env, or None for deterministic."""
+    global INFER_MODEL
+    if INFER_MODEL is not None or not INFER_BACKEND:
+        return INFER_MODEL
+    import sys
+    sys.path.insert(0, str(HERE))
+    from inference import make_generator
+    INFER_MODEL = make_generator(
+        backend=INFER_BACKEND,
+        base_model=os.environ.get("INFER_BASE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct"),
+        adapter=os.environ.get("INFER_ADAPTER") or None,
+        llama_url=os.environ.get("INFER_LLAMA_URL") or None,
+        device=os.environ.get("INFER_DEVICE", "auto"),
+        dtype=os.environ.get("INFER_DTYPE", "auto"),
+        max_new_tokens=int(os.environ.get("INFER_MAX_NEW_TOKENS", "768")),
+    )
+    return INFER_MODEL
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -81,15 +119,21 @@ def debug_stream(sid: str) -> StreamingResponse:
     from agent import run_agent
 
     sess = sessions[sid]
+    model = _inference_generator()
 
     def gen():
-        for ev in run_agent(sess["src"], sess["rep"], sess["xlsx"]):
+        for ev in run_agent(sess["src"], sess["rep"], sess["xlsx"], model):
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache",
                                       "X-Accel-Buffering": "no",
                                       "Connection": "keep-alive"})
+
+
+@app.get("/api/infer")
+def infer_status() -> dict:
+    return {"active": bool(INFER_BACKEND), "backend": INFER_BACKEND or "deterministic"}
 
 
 if __name__ == "__main__":

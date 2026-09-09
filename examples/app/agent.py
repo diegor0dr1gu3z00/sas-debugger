@@ -15,8 +15,69 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from deep_debug_run import (build_clean, build_trap, exec_sql, grade,
                             FIELD_DEPENDENCIES, TABLES)
+import json
 
 SUSPECT_COLS = ["ID_CICLO", "SEGMENTO", "EAD_TOTAL", "PD_FINAL", "LGD_FINAL", "ECL", "RWA"]
+
+
+def _run_model(model, suspect: dict, suspect_id: str, clean, trap,
+               rep_schema: list[str]) -> Iterator[dict]:
+    """Drive the debug pass with the real LM, grading its SQL with the oracle."""
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from inference import parse_json
+
+    system, user = _build_prompt(rep_schema, suspect, suspect_id)
+    yield {"kind": "reason",
+           "text": "Querying the local model for the root cause and a diagnostic "
+                   "SQL. It sees the same lineage + suspect row as the captain."}
+    _sleep(0.3)
+
+    raw = model(system, user)
+    parsed = parse_json(raw)
+    if not parsed:
+        yield {"kind": "reason", "text": raw}
+        yield {"kind": "localize",
+               "root_cause": {"table": "", "columns": [], "transformation": "",
+                              "reason": "Model output was not valid JSON."}}
+        yield {"kind": "done",
+               "summary": "Model returned unparseable output; no localisation."}
+        return
+
+    root = parsed.get("root_cause") or {}
+    diag_sql = (parsed.get("diagnostic_sql") or "").strip()
+    verdict = grade(clean, trap, suspect_id, diag_sql) if diag_sql else {
+        "valid": False, "caught": False, "false_positive": False,
+        "trap_rows": 0, "clean_rows": 0}
+
+    # Show how the model reasoned, then the SQL it chose and how the oracle graded it.
+    if isinstance(raw, str) and raw.strip():
+        snippet = raw.strip()
+        yield {"kind": "reason", "text": snippet}
+        _sleep()
+    if diag_sql:
+        yield {"kind": "sql", "sql": diag_sql, "verdict": verdict}
+        _sleep()
+        yield {"kind": "reason",
+               "text": (f"Model's diagnostic SQL graded by the real oracle: "
+                        f"valid={verdict['valid']}, caught={verdict['caught']}, "
+                        f"false_positive={verdict['false_positive']} "
+                        f"(trap rows={verdict.get('trap_rows')}, "
+                        f"clean rows={verdict.get('clean_rows')}).")}
+        _sleep()
+
+    if not root.get("table"):
+        yield {"kind": "localize", "root_cause": {**root,
+               "reason": "Model did not name a table."}}
+    else:
+        yield {"kind": "localize", "root_cause": root}
+    _sleep(0.4)
+    ok = verdict.get("caught") and not verdict.get("false_positive")
+    yield {"kind": "done",
+           "summary": (f"Model localised to `{root.get('table')}` · "
+                       f"{', '.join(root.get('columns') or [])}` · "
+                       f"{root.get('transformation', '')[:120]} — "
+                       f"SQL {'caught the flagged cycle' if ok else 'did not catch it'}.")}
 
 
 def _sleep(s: float = 0.45) -> None:
@@ -43,8 +104,37 @@ def _egp_lineage(path: str) -> dict:
     return manifest
 
 
-def run_agent(egp_src: str, egp_rep: str, xlsx_path: str) -> Iterator[dict]:
-    """Yield event dicts for the whole debug pass on the loaded files."""
+def _build_prompt(rep_schema: list[str], suspect: dict, suspect_id: str) -> tuple[str, str]:
+    """Build a system+user prompt for the deep pipeline in the db-debug-rl format."""
+    from inference import SYSTEM_PROMPT
+    schema = {"t8_final": rep_schema}
+    system = SYSTEM_PROMPT
+    user = (
+        "TABLES PRESENT (table: columns):\n  " +
+        ", ".join(f"{t}  ({', '.join(c)})" for t, c in TABLES.items()) +
+        "\n\nPIPELINE LINEAGE (t8_final is the reported table)\n" +
+        "L0 t1_contratos/t2_basilea/t3_colaterales/t4_ciclos: raw sources.\n" +
+        "L1 t5_pd_cal/t6_lgd_cal: PD and LGD calibrated per cycle.\n" +
+        "L2 t7_ead_cal: EAD_BALANCE/EAD_FUERA -> EAD_TOTAL per contract-month.\n" +
+        "L3 t8_final: per cycle, ECL = PD_FINAL * LGD_FINAL * EAD_TOTAL.\n" +
+        "RECONCILIATION hints: EAD_FUERA = CCF * OR_DISBLE; EAD_BALANCE = OR_DISPTO.\n"
+        "\nSUSPECT ROW\n  " +
+        " | ".join(f"{k}={suspect[k]}" for k in rep_schema if k in suspect) +
+        "\n\nTASK\n  Investigate with read-only SQL, state your hypothesis, then "
+        "localise the root cause (table, columns, transformation) and print the "
+        "diagnostic SQL as JSON."
+    )
+    return system, user
+
+
+def run_agent(egp_src: str, egp_rep: str, xlsx_path: str,
+              model=None) -> Iterator[dict]:
+    """Yield event dicts for the whole debug pass on the loaded files.
+
+    ``model`` is an optional ``generate(system, user) -> str`` callable.  When
+    given, the agent asks the model for the final localisation + diagnostic SQL
+    (graded by the real oracle); otherwise it replays the curated trace.
+    """
     src = _egp_lineage(egp_src)
     rep = _egp_lineage(egp_rep)
     cycles = _load_xlsx_rows(xlsx_path)
@@ -72,6 +162,12 @@ def run_agent(egp_src: str, egp_rep: str, xlsx_path: str) -> Iterator[dict]:
                "suspects": len(cycles),
                "suspect_id": suspect_id}
         _sleep(0.3)
+
+        # Model-driven pass: ask the LM for the localisation + diagnostic SQL.
+        if model is not None:
+            yield from _run_model(model, suspect, suspect_id, clean, trap,
+                                  TABLES["t8_final"])
+            return
 
         # Step 1 — scenario / lineage
         deps = set()
