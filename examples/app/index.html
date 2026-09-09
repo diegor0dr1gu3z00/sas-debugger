@@ -65,6 +65,8 @@
   .subhead span { font:400 12px var(--mono); color:var(--muted); }
   .note { margin-top:8px; padding:13px 14px; background:var(--card); border-left:3px solid var(--cyan); }
   .note p { font:400 14px/1.6 var(--serif); color:var(--ink); text-wrap:pretty; margin:0; }
+  .note textarea { width:100%; border:0; background:transparent; outline:none; resize:vertical; font:400 14px/1.6 var(--serif); color:var(--ink); padding:0; }
+  .note textarea::placeholder { color:var(--muted); }
   .note .foot { display:flex; justify-content:space-between; align-items:center; margin-top:11px; font:400 11px/1 var(--mono); color:var(--muted); }
   .note .foot a { color:var(--accent); }
   .hint { font:400 12px/1.55 var(--serif); color:var(--muted); margin-top:9px; max-width:36ch; }
@@ -180,7 +182,7 @@
 
       <div class="subhead">What looks wrong <span>· in your words</span></div>
       <div class="note">
-        <p>ECL for the CORP cycles in 2024H2 comes out much higher than we expect. I checked the final formula by hand and it looks fine. Other partitions of the same contracts look normal. I don't know why.</p>
+        <textarea id="prompt" rows="2" spellcheck="false" placeholder="Optional — the captain's suspicion. The demo still debugs a sample pipeline.">ECL for the CORP cycles in 2024H2 comes out much higher than we expect. I checked the final formula by hand and it looks fine. Other partitions of the same contracts look normal. I don't know why.</textarea>
         <div class="foot"><span>batch note · attached to all 1,412 cycles</span><a href="#" onclick="return false">edit</a></div>
       </div>
       <div class="hint">No format required. The model reads it as the captain's hypothesis and weights the lineage search accordingly.</div>
@@ -245,7 +247,10 @@ function handle(ev){
         <span><b>Reporting project</b> ${esc(ev.report_project)}</span>
         <span><b>Suspects</b> ${ev.suspects}</span>
         <span><b>Flagged</b> <code>${esc(ev.suspect_id)}</code></span></div>`;
-      append('header', `<div class="body">Session opened — suspicion ready.</div>` + kv);
+      let note = '';
+      if (ev.prompt) note += `<div class="note"><p><b>Captain's note</b> — ${esc(ev.prompt)}</p></div>`;
+      if (ev.demo_schema) note += `<div class="note"><p>Demo trace run on the bundled synthetic pipeline (t1_contratos…t8_final). Uploaded projects are shown above; the SQL below targets that sample schema.</p></div>`;
+      append('header', `<div class="body">Session opened — suspicion ready.</div>` + kv + note);
       statusEl.textContent = 'Debugging ' + ev.suspect_id + ' …';
       break;
     }
@@ -288,8 +293,9 @@ async function run(useFiles){
   const src = document.getElementById('src').files[0];
   const rep = document.getElementById('rep').files[0];
   const xlsx = document.getElementById('xlsx').files[0];
-  if (useFiles){ if(src) fd.append('src', src); if(rep) fd.append('rep', rep); if(xlsx) fd.append('xlsx', xlsx); }
-  const res = await fetch('/api/session', { method:'POST', body: useFiles ? fd : undefined });
+    if (useFiles){ if(src) fd.append('src', src); if(rep) fd.append('rep', rep); if(xlsx) fd.append('xlsx', xlsx); }
+    fd.append('prompt', document.getElementById('prompt').value || '');
+    const res = await fetch('/api/session', { method:'POST', body: fd });
   const data = await res.json();
   document.getElementById('srcName').textContent = data.src;
   document.getElementById('repName').textContent = data.rep;

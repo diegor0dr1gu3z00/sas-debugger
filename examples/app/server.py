@@ -30,7 +30,7 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, UploadFile, Request
+from fastapi import FastAPI, File, Form, UploadFile, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -92,24 +92,26 @@ async def create_session(
     src: UploadFile | None = File(None),
     rep: UploadFile | None = File(None),
     xlsx: UploadFile | None = File(None),
+    prompt: str = Form(""),
 ) -> dict:
     sid = uuid.uuid4().hex
     tmp = Path("/tmp/sas-slm-demo") / sid
     tmp.mkdir(parents=True, exist_ok=True)
 
-    def save(upload: UploadFile | None, fallback: Path, default: Path) -> Path:
+    def save(upload: UploadFile | None, fallback: Path, default: Path) -> tuple[Path, str]:
         if upload is not None:
             p = tmp / (upload.filename or fallback.name)
             p.write_bytes(upload.file.read())
-            return p
-        return default  # use bundled sample when nothing uploaded
+            return p, upload.filename or p.name
+        return default, default.name  # use bundled sample when nothing uploaded
 
-    src_p = save(src, SAMPLE_SRC, SAMPLE_SRC)
-    rep_p = save(rep, SAMPLE_REP, SAMPLE_REP)
-    xlsx_p = save(xlsx, SAMPLE_XLS, SAMPLE_XLS)
-    sessions[sid] = {"src": str(src_p), "rep": str(rep_p), "xlsx": str(xlsx_p)}
-    return {"session_id": sid, "src": src_p.name, "rep": rep_p.name,
-            "xlsx": xlsx_p.name}
+    src_p, src_n = save(src, SAMPLE_SRC, SAMPLE_SRC)
+    rep_p, rep_n = save(rep, SAMPLE_REP, SAMPLE_REP)
+    xlsx_p, xlsx_n = save(xlsx, SAMPLE_XLS, SAMPLE_XLS)
+    sessions[sid] = {"src": str(src_p), "rep": str(rep_p), "xlsx": str(xlsx_p),
+                     "prompt": (prompt or "").strip(),
+                     "names": {"src": src_n, "rep": rep_n, "xlsx": xlsx_n}}
+    return {"session_id": sid, "src": src_n, "rep": rep_n, "xlsx": xlsx_n}
 
 
 @app.get("/api/debug/{sid}")
@@ -122,7 +124,9 @@ def debug_stream(sid: str) -> StreamingResponse:
     model = _inference_generator()
 
     def gen():
-        for ev in run_agent(sess["src"], sess["rep"], sess["xlsx"], model):
+        for ev in run_agent(sess["src"], sess["rep"], sess["xlsx"], model,
+                            prompt=sess.get("prompt", ""),
+                            names=sess.get("names", {})):
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream",

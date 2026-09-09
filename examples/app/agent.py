@@ -21,13 +21,13 @@ SUSPECT_COLS = ["ID_CICLO", "SEGMENTO", "EAD_TOTAL", "PD_FINAL", "LGD_FINAL", "E
 
 
 def _run_model(model, suspect: dict, suspect_id: str, clean, trap,
-               rep_schema: list[str]) -> Iterator[dict]:
+               rep_schema: list[str], prompt: str = "") -> Iterator[dict]:
     """Drive the debug pass with the real LM, grading its SQL with the oracle."""
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from inference import parse_json
 
-    system, user = _build_prompt(rep_schema, suspect, suspect_id)
+    system, user = _build_prompt(rep_schema, suspect, suspect_id, prompt)
     yield {"kind": "reason",
            "text": "Querying the local model for the root cause and a diagnostic "
                    "SQL. It sees the same lineage + suspect row as the captain."}
@@ -104,14 +104,17 @@ def _egp_lineage(path: str) -> dict:
     return manifest
 
 
-def _build_prompt(rep_schema: list[str], suspect: dict, suspect_id: str) -> tuple[str, str]:
+def _build_prompt(rep_schema: list[str], suspect: dict, suspect_id: str,
+                  prompt: str = "") -> tuple[str, str]:
     """Build a system+user prompt for the deep pipeline in the db-debug-rl format."""
     from inference import SYSTEM_PROMPT
     schema = {"t8_final": rep_schema}
     system = SYSTEM_PROMPT
+    captain = (f"\nCAPTAIN'S NOTE\n  “{prompt}”\n" if prompt else "")
     user = (
         "TABLES PRESENT (table: columns):\n  " +
         ", ".join(f"{t}  ({', '.join(c)})" for t, c in TABLES.items()) +
+        captain +
         "\n\nPIPELINE LINEAGE (t8_final is the reported table)\n" +
         "L0 t1_contratos/t2_basilea/t3_colaterales/t4_ciclos: raw sources.\n" +
         "L1 t5_pd_cal/t6_lgd_cal: PD and LGD calibrated per cycle.\n" +
@@ -128,13 +131,18 @@ def _build_prompt(rep_schema: list[str], suspect: dict, suspect_id: str) -> tupl
 
 
 def run_agent(egp_src: str, egp_rep: str, xlsx_path: str,
-              model=None) -> Iterator[dict]:
+              model=None, prompt: str = "", names: dict | None = None) -> Iterator[dict]:
     """Yield event dicts for the whole debug pass on the loaded files.
 
     ``model`` is an optional ``generate(system, user) -> str`` callable.  When
     given, the agent asks the model for the final localisation + diagnostic SQL
     (graded by the real oracle); otherwise it replays the curated trace.
+
+    ``prompt`` is the captain's free-text suspicion (shown back verbatim).
+    ``names`` holds the uploaded filenames so the header reflects what the
+    captain actually dropped in, rather than the sample labels.
     """
+    names = names or {}
     src = _egp_lineage(egp_src)
     rep = _egp_lineage(egp_rep)
     cycles = _load_xlsx_rows(xlsx_path)
@@ -145,41 +153,55 @@ def run_agent(egp_src: str, egp_rep: str, xlsx_path: str,
     try:
         suspect = next((c for c in cycles if str(c.get("FLAG", "")) == "DUDA"), None)
         suspect_id = suspect.get("ID_CICLO") if suspect else dirty_pk
-        # If the loaded xlsx flag doesn't match the deep-bug cycle, fall back to
-        # the deep-bug cycle so the live trace is always demonstrably correct.
+        # The demo DB is the bundled synthetic pipeline. If the flagged cycle in
+        # the uploaded xlsx is not part of it, fall back to the demo cycle but
+        # say so rather than hiding it.
         row = trap.execute("SELECT * FROM t8_final WHERE ID_CICLO=?",
                            (suspect_id,)).fetchone()
-        if row is None:
+        used_demo_cycle = row is None
+        if used_demo_cycle:
             suspect_id = dirty_pk
             row = trap.execute("SELECT * FROM t8_final WHERE ID_CICLO=?",
                                (suspect_id,)).fetchone()
         suspect = dict(zip(TABLES["t8_final"], row))
 
-        yield {"kind": "header", "source_project": src.get("name"),
+        yield {"kind": "header",
+               "source_project": src.get("name"),
                "report_project": rep.get("name"),
                "source_tables": src.get("tables_produced"),
                "report_tables": rep.get("tables_produced"),
                "suspects": len(cycles),
-               "suspect_id": suspect_id}
+               "suspect_id": suspect_id,
+               "prompt": prompt,
+               "demo_schema": True,
+               "uploaded": {"src": names.get("src", ""),
+                            "rep": names.get("rep", ""),
+                            "xlsx": names.get("xlsx", "")}}
         _sleep(0.3)
 
         # Model-driven pass: ask the LM for the localisation + diagnostic SQL.
         if model is not None:
             yield from _run_model(model, suspect, suspect_id, clean, trap,
-                                  TABLES["t8_final"])
+                                  TABLES["t8_final"], prompt)
             return
 
         # Step 1 — scenario / lineage
         deps = set()
         for f in ("ECL", "RWA", "PROVISION"):
             deps |= set(FIELD_DEPENDENCIES.get(f, []))
+        captain = f" The captain's note: “{prompt}”" if prompt else ""
+        fallback = (" Note: the cycle flagged in the uploaded xlsx is not in the "
+                    "demo schema, so I show the built-in deep-bug cycle.") if used_demo_cycle else ""
         yield {"kind": "reason",
-               "text": (f"Loaded two corresponding projects. The reporting project "
-                        f"`{rep.get('name')}` builds `{rep.get('tables_produced')}` "
-                        f"from the source tables in `{src.get('name')}`. "
-                        f"Cycle `{suspect_id}` is flagged (`FLAG=DUDA`). "
-                        f"I see its `ECL` = {suspect['ECL']:.4f} and want to know "
-                        f"which table / field / transformation made it wrong.")}
+               "text": (f"Loaded `{names.get('src', src.get('name'))}` "
+                        f"(source) and `{names.get('rep', rep.get('name'))}` "
+                        f"(reporting); {len(cycles)} suspect rows from "
+                        f"`{names.get('xlsx', xlsx_path)}` captured.{captain} "
+                        f"I see `ECL` = {suspect['ECL']:.4f} for cycle "
+                        f"`{suspect_id}` and want to find which table / field / "
+                        f"transformation made it wrong.{fallback} This trace runs "
+                        f"on the bundled synthetic pipeline (t1_contratos…t8_final); "
+                        f"the SQL below targets that sample schema.")}
         _sleep()
 
         yield {"kind": "reason",
